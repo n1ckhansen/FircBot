@@ -6,7 +6,7 @@ import org.jibble.pircbot.User;
 public class FircBot extends PircBot {
 	
 	public FircBot() {
-		this.setName( "FircBot" );
+		this.setName( "FircBotWork" );
 	}
 	
 	public void onMessage( String channel, String sender, String login, String hostname, String message ) {
