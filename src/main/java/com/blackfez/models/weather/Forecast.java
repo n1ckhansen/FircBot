@@ -102,8 +102,7 @@ public class Forecast {
 	}
 	
 	public boolean isCurrent() {
-		Calendar now = Calendar.getInstance();
-		return now.compareTo(TIMESTAMP) < 3600000;
+		return ( Calendar.getInstance().getTimeInMillis() - TIMESTAMP.getTimeInMillis() ) / 1000L / 60L / 60L > 1;
 	}
 	
 	public void setJsonForecast( JsonObject jf ) {

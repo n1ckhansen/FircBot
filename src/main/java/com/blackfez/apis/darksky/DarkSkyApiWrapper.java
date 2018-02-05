@@ -67,7 +67,7 @@ public class DarkSkyApiWrapper {
 		Location loc = zipper.getLocation( zip );
 		Forecast f = this.getForcastForCoords( loc );
 		StringBuilder blurb = new StringBuilder();
-		blurb.append( String.format( "%s, %s %s: ", loc.getCity(), loc.getState().replaceAll("\\", ""), loc.getZip() ) );
+		blurb.append( String.format( "%s, %s %s: ", loc.getCity(), loc.getState(), loc.getZip() ) );
 		blurb.append( String.format( "%s and %s%sF Feels like: %s%sF ", f.getCurrentDescription(), f.getCurrentTemp(), f.DEGREE, f.getCurrentApparentTemp(), f.DEGREE ) );
 		blurb.append( String.format( "Winds: %smph from %s ", f.getCurrentWindSpeed(), f.getCurrentWindDirection()  ) );
 		blurb.append( String.format( "Gusts: %smph. ", f.getCurrentWindGust() ) );
