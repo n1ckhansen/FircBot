@@ -18,6 +18,7 @@ import javax.json.JsonReader;
 
 import com.blackfez.models.geolocation.*;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class ZipCodeApiWrapper {
 	
@@ -38,8 +39,10 @@ public class ZipCodeApiWrapper {
 				JsonObject jObject = reader.readObject();
 				for( String key : jObject.keySet() ) {
 					Location loc = new Location();
+					loc.setCity( jObject.get( key ). asJsonObject().getString( "CITY" ).toString() );
 					loc.setLatitude( jObject.get(key).asJsonObject().get("LATITUDE").toString() );
 					loc.setLongitude( jObject.get(key).asJsonObject().get("LONGITUDE").toString() );
+					loc.setState( jObject.get( key ).asJsonObject().get( "STATE" ).toString() );
 					loc.setZip( jObject.get(key).asJsonObject().get("ZIP").toString() );
 					this.LOOKUPS.put(key, loc);
 				}
@@ -76,10 +79,12 @@ public class ZipCodeApiWrapper {
 			InputStream is = url.openStream();
 			JsonReader reader = Json.createReader( is );
 			JsonObject results = reader.readObject();
+			loc.setCity( results.get("city").toString() );
 			loc.setLatitude(results.get("lat").toString());
 			loc.setLongitude( results.get( "lng" ).toString() );
+			loc.setState( results.get( "state" ).toString() );
 			this.LOOKUPS.put(zip, loc);
-			Gson gson = new Gson();
+			Gson gson = new GsonBuilder().setPrettyPrinting().create();
 			FileWriter writer = new FileWriter( "lookups.ser" );
 			writer.write( gson.toJson( this.LOOKUPS) );
 			writer.close();

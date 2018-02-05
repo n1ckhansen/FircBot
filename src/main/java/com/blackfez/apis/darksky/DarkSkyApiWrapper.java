@@ -31,11 +31,11 @@ public class DarkSkyApiWrapper {
 	public Forecast getForcastForZip( String zip ) {
 		Location loc = zipper.getLocation(zip);
 		Forecast forecast = this.getForcastForCoords( loc );
-		return null;
+		return forecast;
 	}
 	
 	public Forecast getForcastForCoords( Location loc ) {
-		if( CACHE.containsKey( loc ) && CACHE.get( loc ).isCurrent() )
+		if( CACHE.containsKey( loc ) && CACHE.get( loc ).isCurrent() ) 
 			return CACHE.get( loc );
 		Forecast forecast = consultDarkSky( loc );
 		
@@ -43,13 +43,14 @@ public class DarkSkyApiWrapper {
 	}
 	
 	private Forecast consultDarkSky( Location loc ) {
-		Forecast f = new Forecast( loc );
+		Forecast f = new Forecast();
 		try {
 			URL url = new URL( String.format("%s%s/%s,%s", DSURL,DSKEY,loc.getLatitude(), loc.getLongitude() ) );
 			InputStream is = url.openStream();
 			JsonReader reader = Json.createReader( is );
 			JsonObject results = reader.readObject();
-			System.out.println( results );
+			f.setJsonForecast( results );
+			this.CACHE.put( loc, f );
 
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -62,11 +63,20 @@ public class DarkSkyApiWrapper {
 		return f;
 	}
 	
-	
-	
-	
-	
-	
+	public String retrieveCurrentWeatherForZip( String zip ) {
+		Location loc = zipper.getLocation( zip );
+		Forecast f = this.getForcastForCoords( loc );
+		StringBuilder blurb = new StringBuilder();
+		blurb.append( String.format( "%s, %s %s: ", loc.getCity(), loc.getState().replaceAll("\\", ""), loc.getZip() ) );
+		blurb.append( String.format( "%s and %s%sF Feels like: %s%sF ", f.getCurrentDescription(), f.getCurrentTemp(), f.DEGREE, f.getCurrentApparentTemp(), f.DEGREE ) );
+		blurb.append( String.format( "Winds: %smph from %s ", f.getCurrentWindSpeed(), f.getCurrentWindDirection()  ) );
+		blurb.append( String.format( "Gusts: %smph. ", f.getCurrentWindGust() ) );
+		blurb.append( String.format( "Clouds: %s%s ", f.getCurrentCloudCoverage(), f.PERCENT ) );
+		blurb.append( String.format( "Dewpoint: %s%sF ", f.getCurrentDewPoint(), f.DEGREE ) );
+		blurb.append( String.format( "Humidity: %s%s ", f.getCurrentHumidity(), f.DEGREE ) );
+		blurb.append( String.format( "Pressure: %smbar ", f.getCurrentPressure() ) );
+		return blurb.toString();
+	}
 	
 	private static class Singleton {
 		private static final DarkSkyApiWrapper INSTANCE = new DarkSkyApiWrapper();
