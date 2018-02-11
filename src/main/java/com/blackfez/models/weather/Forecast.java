@@ -1,20 +1,24 @@
 package com.blackfez.models.weather;
 
+import java.io.Serializable;
 import java.util.Calendar;
 
-import javax.json.JsonObject;
-
+import com.google.gson.JsonObject;
 import com.jayway.jsonpath.JsonPath;
 
-public class Forecast {
+public class Forecast implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Calendar TIMESTAMP;
-	private JsonObject jsonForecast;
- 	public final String DEGREE = "\u00b0";
- 	public final String PERCENT = "\u0025";
+	private String jsonForecast;
+ 	public transient final String DEGREE = "\u00b0";
+ 	public transient final String PERCENT = "\u0025";
 	
 	public Forecast() {
-		this.TIMESTAMP = Calendar.getInstance();
+		this.setTimestamp( Calendar.getInstance() );
 	}
 	
 	public String getCurrentApparentTemp() {
@@ -97,7 +101,7 @@ public class Forecast {
 		return JsonPath.read(  this.jsonForecast, "$.currently.windSpeed" ).toString();
 	}
 
-	public JsonObject getJsonForecast() {
+	public String getJsonForecast() {
 		return this.jsonForecast;
 	}
 	
@@ -105,8 +109,16 @@ public class Forecast {
 		return ( Calendar.getInstance().getTimeInMillis() - TIMESTAMP.getTimeInMillis() ) / 1000L / 60L / 60L > 1;
 	}
 	
-	public void setJsonForecast( JsonObject jf ) {
-		this.jsonForecast = jf;
+	public void setJsonForecast( String results ) {
+		this.jsonForecast = results;
+	}
+	
+	public Calendar getTimestamp() {
+		return this.TIMESTAMP;
+	}
+	
+	public void setTimestamp( Calendar ts ) {
+		this.TIMESTAMP = ts;
 	}
 
 }

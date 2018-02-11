@@ -1,31 +1,40 @@
 package com.blackfez.apis.darksky;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-
 import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
 import com.blackfez.models.geolocation.Location;
 import com.blackfez.models.weather.Forecast;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 
-public class DarkSkyApiWrapper {
+public class DarkSkyApiWrapper implements Serializable {
 
-	private final String DSKEY = "37a15c6db486688f88dff78d57d2edb4";
-	private final String DSURL = "https://api.darksky.net/forecast/";
+	private static final long serialVersionUID = 1L;
+	public transient static final String DSKFILE = "dskForecasts.ser";
+	private transient final String DSKEY = "37a15c6db486688f88dff78d57d2edb4";
+	private transient final String DSURL = "https://api.darksky.net/forecast/";
 	private Map<Location,Forecast> CACHE;
-	private final ZipCodeApiWrapper zipper = ZipCodeApiWrapper.getInstance();
+	private transient final ZipCodeApiWrapper zipper = ZipCodeApiWrapper.getInstance();
 	
 	private DarkSkyApiWrapper() {
-		this.CACHE = new HashMap<Location,Forecast>();
+		if( this.CACHE == null )
+			this.CACHE = new HashMap<Location,Forecast>();
 	}
 	
 	public Forecast getForcastForZip( String zip ) {
@@ -34,8 +43,16 @@ public class DarkSkyApiWrapper {
 		return forecast;
 	}
 	
+	public Map<Location,Forecast> getCache() {
+		return this.CACHE;
+	}
+	
+	public void setCache( Map<Location,Forecast> cache ) {
+		this.CACHE = cache;
+	}
+	
 	public Forecast getForcastForCoords( Location loc ) {
-		if( CACHE.containsKey( loc ) && CACHE.get( loc ).isCurrent() ) 
+		if( this.getCache().containsKey( loc ) && CACHE.get( loc ).isCurrent() ) 
 			return CACHE.get( loc );
 		Forecast forecast = consultDarkSky( loc );
 		
@@ -47,19 +64,25 @@ public class DarkSkyApiWrapper {
 		try {
 			URL url = new URL( String.format("%s%s/%s,%s", DSURL,DSKEY,loc.getLatitude(), loc.getLongitude() ) );
 			InputStream is = url.openStream();
-			JsonReader reader = Json.createReader( is );
-			JsonObject results = reader.readObject();
-			f.setJsonForecast( results );
+			InputStreamReader isr = new InputStreamReader( is );
+			BufferedReader br = new BufferedReader( isr );
+			StringBuilder sb = new StringBuilder();
+			String line;
+			while( ( line = br.readLine() ) != null ) {
+				sb.append( line );
+			}
+			f.setJsonForecast(  sb.toString() );
 			this.CACHE.put( loc, f );
-
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
+			this.serializeTheStuff();
+		} 
+		catch (MalformedURLException e) {
+			System.out.println( "Dark Sky API URL malformed. Aborting consultation" );
 			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} 
+		catch (IOException e) {
+			System.out.println( "Unable to serialize forecast cache.  Aborting serialization." );
 			e.printStackTrace();
 		}
-		
 		return f;
 	}
 	
@@ -79,15 +102,42 @@ public class DarkSkyApiWrapper {
 	}
 	
 	private static class Singleton {
-		private static final DarkSkyApiWrapper INSTANCE = new DarkSkyApiWrapper();
+		private static DarkSkyApiWrapper INSTANCE;
 	}
 	
 	public static DarkSkyApiWrapper getInstance() {
+		if( Singleton.INSTANCE == null ) {
+			File f = new File( DSKFILE );
+			if( !f.exists() )
+				Singleton.INSTANCE = new DarkSkyApiWrapper();
+			else {
+				try {
+					FileInputStream fis = new FileInputStream( f );
+					ObjectInputStream ois = new ObjectInputStream( fis );
+					Singleton.INSTANCE = (DarkSkyApiWrapper) ois.readObject();
+					ois.close();
+					fis.close();
+				} 
+				catch (IOException | ClassNotFoundException e) {
+					Singleton.INSTANCE = new DarkSkyApiWrapper();
+				}
+			}
+		}
 		return Singleton.INSTANCE;
+
 	}
 	
 	private Object readResolve() throws ObjectStreamException {
 		return Singleton.INSTANCE;
+	}
+
+	public void serializeTheStuff() throws IOException {
+		File f = new File( DSKFILE );
+		FileOutputStream fos = new FileOutputStream( f );
+		ObjectOutputStream oos = new ObjectOutputStream( fos );
+		oos.writeObject( this );
+		oos.close();
+		fos.close();
 	}
 	
 
