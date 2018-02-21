@@ -19,8 +19,6 @@ import java.util.Map;
 import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
 import com.blackfez.models.geolocation.Location;
 import com.blackfez.models.weather.Forecast;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
 
 public class DarkSkyApiWrapper implements Serializable {

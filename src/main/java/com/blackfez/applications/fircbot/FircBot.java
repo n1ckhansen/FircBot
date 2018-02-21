@@ -38,7 +38,11 @@ public class FircBot extends PircBot {
 		File f = new File( CHANUSERSFILE );
 		if( ! f.exists() ) {
 			this.ChanUsers = new HashMap<String,ChannelUser>();
-			return;
+			FileOutputStream fos = new FileOutputStream( f );
+			ObjectOutputStream oos = new ObjectOutputStream( fos );
+			oos.writeObject( this.ChanUsers );
+			oos.close();
+			fos.close();
 		}
 		FileInputStream fis = new FileInputStream( f );
 		ObjectInputStream ois = new ObjectInputStream( fis );
@@ -105,6 +109,13 @@ public class FircBot extends PircBot {
 				if( !u.getNick().equals( this.getName() ) && !u.getNick().equals( "ChanServ" ) )
 					sendMessage( channel, u.getNick() + ": I'm tracking you" );
 			}
+		}
+		try {
+			this.serializeTheStuff();
+		} catch (IOException e) {
+			//TODO: handle this better when you're sober
+			System.out.println( "unable to serialze the stuff in onUserList()");
+			e.printStackTrace();
 		}
 	}
 	
