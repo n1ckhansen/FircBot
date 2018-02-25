@@ -1,5 +1,6 @@
 package com.blackfez.models.user;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -7,14 +8,19 @@ import org.jibble.pircbot.User;
 
 import com.blackfez.models.geolocation.Location;
 
-public class ChannelUser {
+public class ChannelUser implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Location LOCATION; 
-	private User USER;
+	private transient User USER;
 	private Set<String> CHANNELS;
+	private String nic;
 	
-	public ChannelUser( User user) { 
-		this.setUser( user );
+	public ChannelUser( String nic) { 
+		this.setNic( nic );
 		this.CHANNELS = new HashSet<String>(); 
 	}
 	
@@ -31,7 +37,11 @@ public class ChannelUser {
 	}
 
 	public String getNic() {
-		return this.USER.getNick();
+		return this.nic;
+	}
+	
+	public User getUser() {
+		return this.USER;
 	}
 	
 	public void removeChannel( String channel ) {
@@ -40,6 +50,10 @@ public class ChannelUser {
 	
 	public void setLocation( Location loc ) {
 		this.LOCATION = loc;
+	}
+	
+	public void setNic( String nic ) {
+		this.nic = nic;
 	}
 	
 	public void setUser( User user ) {

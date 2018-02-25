@@ -3,10 +3,14 @@ package com.blackfez.apis.zipcodeapi;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -15,42 +19,52 @@ import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.management.InstanceAlreadyExistsException;
 
 import com.blackfez.models.geolocation.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-public class ZipCodeApiWrapper {
+public final class ZipCodeApiWrapper implements Serializable {
 	
 	/**
 	 * Relating to what we actually want to be doing...
 	 */
-	private final String API = "WtH14qwX8hJ75fsnRKjiZRCZVNvPNwJR8RvqPvDBVNebRN9QctOFS5RJQtjwCtHB";
-	private final String URI = "https://www.zipcodeapi.com/rest/";
-	private final String INFO = "/info.json/";
-	private final String UNITS = "/degrees";
+	private static final long serialVersionUID = 1L;
+	public transient static final String ZCWFILE = "zipCache.ser";
+	private transient final String API = "WtH14qwX8hJ75fsnRKjiZRCZVNvPNwJR8RvqPvDBVNebRN9QctOFS5RJQtjwCtHB";
+	private transient final String URI = "https://www.zipcodeapi.com/rest/";
+	private transient final String INFO = "/info.json/";
+	private transient final String UNITS = "/degrees";
 	private Map<String,Location> LOOKUPS = new HashMap<String,Location>();
+	private transient static ZipCodeApiWrapper INSTANCE = null;
 	
-	private ZipCodeApiWrapper() {
-		File lookups = new File( "lookups.ser" );
-		if( lookups.exists() ) {
-			try {
-				JsonReader reader = Json.createReader( new FileInputStream( "lookups.ser" ) );
-				JsonObject jObject = reader.readObject();
-				for( String key : jObject.keySet() ) {
-					Location loc = new Location();
-					loc.setCity( jObject.get( key ). asJsonObject().getString( "CITY" ).toString() );
-					loc.setLatitude( jObject.get(key).asJsonObject().get("LATITUDE").toString() );
-					loc.setLongitude( jObject.get(key).asJsonObject().get("LONGITUDE").toString() );
-					loc.setState( jObject.get( key ).asJsonObject().get( "STATE" ).toString() );
-					loc.setZip( jObject.get(key).asJsonObject().get("ZIP").toString() );
-					this.LOOKUPS.put(key, loc);
-				}
-			} 
-			catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+	
+	private ZipCodeApiWrapper() {}
+	
+	public static ZipCodeApiWrapper getInstance() {
+		if( null != INSTANCE ) {
+			return INSTANCE;
+		}
+		synchronized( ZipCodeApiWrapper.class ) {
+			if( null != INSTANCE )
+				return INSTANCE;
+			File f = new File( ZCWFILE );
+			if( !f.exists() ) {
+				INSTANCE = new ZipCodeApiWrapper();
+				return INSTANCE;
 			}
+			try {
+				FileInputStream fis  = new FileInputStream( f );
+				ObjectInputStream ois  = new ObjectInputStream( fis );
+				INSTANCE = (ZipCodeApiWrapper) ois.readObject();
+				ois.close();
+				fis.close();
+			}
+			catch( IOException | ClassNotFoundException e ) {
+				INSTANCE = new ZipCodeApiWrapper();
+			}
+			return INSTANCE;
 		}
 	}
 	
@@ -84,10 +98,7 @@ public class ZipCodeApiWrapper {
 			loc.setLongitude( results.get( "lng" ).toString() );
 			loc.setState( results.get( "state" ).toString() );
 			this.LOOKUPS.put(zip, loc);
-			Gson gson = new GsonBuilder().setPrettyPrinting().create();
-			FileWriter writer = new FileWriter( "lookups.ser" );
-			writer.write( gson.toJson( this.LOOKUPS) );
-			writer.close();
+			this.serializeTheStuff();
 		} 
 		catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -100,16 +111,13 @@ public class ZipCodeApiWrapper {
 		return loc;
 	}
 	
-	private static class Singleton {
-		private static final ZipCodeApiWrapper INSTANCE = new ZipCodeApiWrapper();
-	}
-	
-	public static ZipCodeApiWrapper getInstance() {
-		return Singleton.INSTANCE;
-	}
-	
-	private Object readResolve() throws ObjectStreamException {
-		return Singleton.INSTANCE;
+	public void serializeTheStuff() throws IOException {
+		File f = new File( ZCWFILE );
+		FileOutputStream fos = new FileOutputStream( f );
+		ObjectOutputStream oos = new ObjectOutputStream( fos );
+		oos.writeObject( this );
+		oos.close();
+		fos.close();
 	}
 
 }
