@@ -28,20 +28,48 @@ public class DarkSkyApiWrapper implements Serializable {
 	private transient final String DSKEY = "37a15c6db486688f88dff78d57d2edb4";
 	private transient final String DSURL = "https://api.darksky.net/forecast/";
 	private Map<Location,Forecast> CACHE;
-	private transient final ZipCodeApiWrapper zipper = ZipCodeApiWrapper.getInstance();
+	private transient static DarkSkyApiWrapper INSTANCE = null;
 	
-	private DarkSkyApiWrapper() {
-		if( this.CACHE == null )
-			this.CACHE = new HashMap<Location,Forecast>();
+	private DarkSkyApiWrapper() {}
+	
+	public static DarkSkyApiWrapper getInstance() {
+		if( null != INSTANCE ) 
+			return INSTANCE;
+		synchronized( DarkSkyApiWrapper.class ) {
+			if( null != INSTANCE )
+				return INSTANCE;
+			File f = new File( DSKFILE );
+			if( f.exists() ) {
+				try {
+					FileInputStream fis = new FileInputStream( f );
+					ObjectInputStream ois = new ObjectInputStream( fis );
+					INSTANCE = (DarkSkyApiWrapper) ois.readObject();
+					ois.close();
+					fis.close();
+				}
+				catch( IOException | ClassNotFoundException e ) {
+					INSTANCE = new DarkSkyApiWrapper();
+					return INSTANCE;
+				}
+			}
+			else {
+				INSTANCE = new DarkSkyApiWrapper();
+
+			}
+			return INSTANCE;
+		}
 	}
 	
 	public Forecast getForcastForZip( String zip ) {
-		Location loc = zipper.getLocation(zip);
+		Location loc = ZipCodeApiWrapper.getInstance().getLocation(zip);
 		Forecast forecast = this.getForcastForCoords( loc );
 		return forecast;
 	}
 	
 	public Map<Location,Forecast> getCache() {
+		if( null == CACHE )
+			CACHE = new HashMap<Location,Forecast>();
+		System.out.println( "this.CACHE has keys: " + this.CACHE.keySet().size() );
 		return this.CACHE;
 	}
 	
@@ -50,10 +78,27 @@ public class DarkSkyApiWrapper implements Serializable {
 	}
 	
 	public Forecast getForcastForCoords( Location loc ) {
-		if( this.getCache().containsKey( loc ) && CACHE.get( loc ).isCurrent() ) 
-			return CACHE.get( loc );
+		System.out.println( "DSK.Cache contains location key: " + this.getCache().containsKey( loc ) );
+		System.out.println( "Iterating keys");
+		for( Location l : this.getCache().keySet() ) {
+			System.out.println( "Key: " + l.getZip() );
+		}
+		Location f = null;
+		for( Location l : this.getCache().keySet() ) {
+			if( l.getZip().equals( loc.getZip() ) ) {
+				f = l;
+				break;
+			}
+		}
+		if( null != f && this.getCache().get( f ).isCurrent() ) {
+			System.out.println( "We've got a cached forecast" );
+			return this.getCache().get( f );
+		}
+		else if( null != f && ! this.getCache().get( f ).isCurrent() ) {
+			System.out.println( "We've got a stale cached forecast" );
+			this.getCache().remove( f );
+		}
 		Forecast forecast = consultDarkSky( loc );
-		
 		return forecast;
 	}
 	
@@ -85,7 +130,7 @@ public class DarkSkyApiWrapper implements Serializable {
 	}
 	
 	public String retrieveCurrentWeatherForZip( String zip ) {
-		Location loc = zipper.getLocation( zip );
+		Location loc = ZipCodeApiWrapper.getInstance().getLocation( zip );
 		Forecast f = this.getForcastForCoords( loc );
 		StringBuilder blurb = new StringBuilder();
 		blurb.append( String.format( "%s, %s %s: ", loc.getCity(), loc.getState(), loc.getZip() ) );
@@ -99,36 +144,6 @@ public class DarkSkyApiWrapper implements Serializable {
 		return blurb.toString();
 	}
 	
-	private static class Singleton {
-		private static DarkSkyApiWrapper INSTANCE;
-	}
-	
-	public static DarkSkyApiWrapper getInstance() {
-		if( Singleton.INSTANCE == null ) {
-			File f = new File( DSKFILE );
-			if( !f.exists() )
-				Singleton.INSTANCE = new DarkSkyApiWrapper();
-			else {
-				try {
-					FileInputStream fis = new FileInputStream( f );
-					ObjectInputStream ois = new ObjectInputStream( fis );
-					Singleton.INSTANCE = (DarkSkyApiWrapper) ois.readObject();
-					ois.close();
-					fis.close();
-				} 
-				catch (IOException | ClassNotFoundException e) {
-					Singleton.INSTANCE = new DarkSkyApiWrapper();
-				}
-			}
-		}
-		return Singleton.INSTANCE;
-
-	}
-	
-	private Object readResolve() throws ObjectStreamException {
-		return Singleton.INSTANCE;
-	}
-
 	public void serializeTheStuff() throws IOException {
 		File f = new File( DSKFILE );
 		FileOutputStream fos = new FileOutputStream( f );

@@ -24,7 +24,7 @@ public class FircBot extends PircBot {
 	private Map<String,ChannelUser> ChanUsers;
 	
 	public FircBot() {
-		this.setName( "FircBot" );
+		this.setName( "_FircBot" );
 		try {
 			this.initChanUsers();
 		} catch (ClassNotFoundException | IOException e) {
@@ -32,13 +32,16 @@ public class FircBot extends PircBot {
 			e.printStackTrace();
 			System.exit( 1 );
 		}
+		ZipCodeApiWrapper.getInstance();
+		DarkSkyApiWrapper.getInstance();
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void initChanUsers() throws IOException, ClassNotFoundException {
 		File f = new File( CHANUSERSFILE );
 		if( ! f.exists() ) {
 			this.ChanUsers = new HashMap<String,ChannelUser>();
-			FileOutputStream fos = new FileOutputStream( f );
+			FileOutputStream fos = new FileOutputStream( CHANUSERSFILE );
 			ObjectOutputStream oos = new ObjectOutputStream( fos );
 			oos.writeObject( this.ChanUsers );
 			oos.close();

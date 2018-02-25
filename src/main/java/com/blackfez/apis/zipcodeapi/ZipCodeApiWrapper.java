@@ -19,12 +19,13 @@ import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.management.InstanceAlreadyExistsException;
 
 import com.blackfez.models.geolocation.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-public class ZipCodeApiWrapper implements Serializable {
+public final class ZipCodeApiWrapper implements Serializable {
 	
 	/**
 	 * Relating to what we actually want to be doing...
@@ -36,8 +37,35 @@ public class ZipCodeApiWrapper implements Serializable {
 	private transient final String INFO = "/info.json/";
 	private transient final String UNITS = "/degrees";
 	private Map<String,Location> LOOKUPS = new HashMap<String,Location>();
+	private transient static ZipCodeApiWrapper INSTANCE = null;
 	
-	private ZipCodeApiWrapper() {
+	
+	private ZipCodeApiWrapper() {}
+	
+	public static ZipCodeApiWrapper getInstance() {
+		if( null != INSTANCE ) {
+			return INSTANCE;
+		}
+		synchronized( ZipCodeApiWrapper.class ) {
+			if( null != INSTANCE )
+				return INSTANCE;
+			File f = new File( ZCWFILE );
+			if( !f.exists() ) {
+				INSTANCE = new ZipCodeApiWrapper();
+				return INSTANCE;
+			}
+			try {
+				FileInputStream fis  = new FileInputStream( f );
+				ObjectInputStream ois  = new ObjectInputStream( fis );
+				INSTANCE = (ZipCodeApiWrapper) ois.readObject();
+				ois.close();
+				fis.close();
+			}
+			catch( IOException | ClassNotFoundException e ) {
+				INSTANCE = new ZipCodeApiWrapper();
+			}
+			return INSTANCE;
+		}
 	}
 	
 	public String getLatitude( String zip ) {
@@ -83,33 +111,6 @@ public class ZipCodeApiWrapper implements Serializable {
 		return loc;
 	}
 	
-	private static class Singleton {
-		private static ZipCodeApiWrapper INSTANCE;
-	}
-	
-	public static ZipCodeApiWrapper getInstance() {
-		if( Singleton.INSTANCE == null ) {
-			File f = new File( ZCWFILE );
-			if( !f.exists() ) 
-				Singleton.INSTANCE = new ZipCodeApiWrapper();
-			else {
-				try {
-					FileInputStream fis = new FileInputStream( f );
-					ObjectInputStream ois = new ObjectInputStream( fis );
-					Singleton.INSTANCE = (ZipCodeApiWrapper) ois.readObject();
-				} 
-				catch (IOException | ClassNotFoundException e) {
-					Singleton.INSTANCE = new ZipCodeApiWrapper();
-				}
-			}
-		}
-		return Singleton.INSTANCE;
-	}
-	
-	private Object readResolve() throws ObjectStreamException {
-		return Singleton.INSTANCE;
-	}
-
 	public void serializeTheStuff() throws IOException {
 		File f = new File( ZCWFILE );
 		FileOutputStream fos = new FileOutputStream( f );

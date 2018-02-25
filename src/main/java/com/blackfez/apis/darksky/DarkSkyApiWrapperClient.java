@@ -17,10 +17,6 @@ public class DarkSkyApiWrapperClient {
 	public static void main(String[] args) throws FileNotFoundException {
 		DarkSkyApiWrapper wrap = DarkSkyApiWrapper.getInstance();
 		System.out.println( wrap.retrieveCurrentWeatherForZip( "51503" ) );
-		
-		
-		
-		
 	}
 
 }

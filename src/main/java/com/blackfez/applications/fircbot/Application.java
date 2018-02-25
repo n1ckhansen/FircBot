@@ -18,6 +18,9 @@ public class Application {
 							System.out.println( "Unable to serialize all of the things on exit.  Boo." );
 							e.printStackTrace();
 						}
+						finally  {
+							// go quietly into the night
+						}
 					}
 				}
 		);

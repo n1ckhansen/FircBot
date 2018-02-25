@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Calendar;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.jayway.jsonpath.JsonPath;
 
 public class Forecast implements Serializable {
@@ -22,41 +23,42 @@ public class Forecast implements Serializable {
 	}
 	
 	public String getCurrentApparentTemp() {
-		return JsonPath.read( this.jsonForecast, "$.currently.apparentTemperature" ).toString();
+		
+		return JsonPath.read( getJsonForecast(), "$.currently.apparentTemperature" ).toString();
 	}
 	
 	public String getCurrentCloudCoverage() {
-		Double d = Double.parseDouble( JsonPath.read( this.jsonForecast, "$.currently.cloudCover" ).toString() );
+		Double d = Double.parseDouble( JsonPath.read( getJsonForecast(), "$.currently.cloudCover" ).toString() );
 		d = d * 100;
 		Long l = Math.round( d );
 		return l.toString();
 	}
 	
 	public String getCurrentDescription() {
-		return JsonPath.read( this.jsonForecast, "$.currently.summary" ).toString().replaceAll( "\"", "" );
+		return JsonPath.read( getJsonForecast(), "$.currently.summary" ).toString().replaceAll( "\"", "" );
 	}
 	
 	public String getCurrentDewPoint() {
-		return JsonPath.read( this.jsonForecast, "$.currently.dewPoint" ).toString();
+		return JsonPath.read( getJsonForecast(), "$.currently.dewPoint" ).toString();
 	}
 	
 	public String getCurrentHumidity() {
-		Double d = Double.parseDouble( JsonPath.read( this.jsonForecast, "$.currently.humidity" ).toString() );
+		Double d = Double.parseDouble( JsonPath.read( getJsonForecast(), "$.currently.humidity" ).toString() );
 		d = d * 100;
 		Long l = Math.round( d );
 		return l.toString();
 	}
 	
 	public String getCurrentPressure() {
-		return JsonPath.read( this.jsonForecast, "$.currently.pressure" ).toString();
+		return JsonPath.read( getJsonForecast(), "$.currently.pressure" ).toString();
 	}
 
 	public String getCurrentTemp() {
-		return JsonPath.read( this.jsonForecast,  "$.currently.temperature" ).toString();
+		return JsonPath.read( getJsonForecast(),  "$.currently.temperature" ).toString();
 	}
 
 	public String getCurrentWindDirection() {
-		Integer dir = Integer.parseInt( JsonPath.read( this.jsonForecast, "$.currently.windBearing" ).toString() ) % 360;
+		Integer dir = Integer.parseInt( JsonPath.read( getJsonForecast(), "$.currently.windBearing" ).toString() ) % 360;
 		if( 348 <= dir || dir < 12  )
 			return "N";
 		else if( 12 <= dir && dir < 35 )
@@ -94,11 +96,11 @@ public class Forecast implements Serializable {
 	}
 	
 	public String getCurrentWindGust() {
-		return JsonPath.read( this.jsonForecast, "$.currently.windGust" ).toString();
+		return JsonPath.read( getJsonForecast(), "$.currently.windGust" ).toString();
 	}
 	
 	public String getCurrentWindSpeed() {
-		return JsonPath.read(  this.jsonForecast, "$.currently.windSpeed" ).toString();
+		return JsonPath.read(  getJsonForecast(), "$.currently.windSpeed" ).toString();
 	}
 
 	public String getJsonForecast() {
@@ -106,7 +108,10 @@ public class Forecast implements Serializable {
 	}
 	
 	public boolean isCurrent() {
-		return ( Calendar.getInstance().getTimeInMillis() - TIMESTAMP.getTimeInMillis() ) / 1000L / 60L / 60L > 1;
+		System.out.println( "NOW: " + Calendar.getInstance().getTimeInMillis() );
+		System.out.println( "TIMESTAMP: " + TIMESTAMP.getTimeInMillis() );
+		System.out.println( "Math: " + ( Calendar.getInstance().getTimeInMillis() - TIMESTAMP.getTimeInMillis() ) / 100L / 60L / 60L );
+		return ( Calendar.getInstance().getTimeInMillis() - TIMESTAMP.getTimeInMillis() ) / 1000L / 60L / 60L < 1;
 	}
 	
 	public void setJsonForecast( String results ) {
@@ -120,5 +125,4 @@ public class Forecast implements Serializable {
 	public void setTimestamp( Calendar ts ) {
 		this.TIMESTAMP = ts;
 	}
-
 }
