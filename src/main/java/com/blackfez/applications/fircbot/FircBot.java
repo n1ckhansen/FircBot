@@ -24,7 +24,7 @@ public class FircBot extends PircBot {
 	private Map<String,ChannelUser> ChanUsers;
 	
 	public FircBot() {
-		this.setName( "_FircBot" );
+		this.setName( "FircBot" );
 		try {
 			this.initChanUsers();
 		} catch (ClassNotFoundException | IOException e) {
@@ -60,7 +60,23 @@ public class FircBot extends PircBot {
 			sendMessage( channel, sender + ": The time is now " + time );
 		}
 		else if( message.equalsIgnoreCase( "wf" ) ) {
-			sendMessage( channel, sender + ": Working on implementing the weather forecast command" );
+			String[] tokens =  message.split( " " );
+			if( this.ChanUsers.containsKey( sender ) ) {
+				ChannelUser cu = this.ChanUsers.get( sender );
+				if( tokens.length >= 2 ) {
+					Location loc = new Location();
+					loc.setZip( tokens[ 1 ] );
+					cu.setLocation( loc );
+				}
+				if( cu.getLocation() == null )
+					cu.setLocation( new Location() );
+				if( cu.getLocation().isZipSet() ) {
+					DarkSkyApiWrapper dsw = DarkSkyApiWrapper.getInstance();
+					sendMessage( channel, dsw.retrieveWeatherForecastForZip( cu.getLocation().getZip() ) );
+				}
+				else
+					sendMessage( channel, sender + ": try it with a zip code--wf 00000" );
+			}
 		}
 		else if( message.startsWith( "wx" ) ) {
 			String[] tokens = message.split( " " );

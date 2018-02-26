@@ -1,7 +1,10 @@
 package com.blackfez.models.weather;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+
+import javax.json.Json;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -16,6 +19,8 @@ public class Forecast implements Serializable {
 	private Calendar TIMESTAMP;
 	private String jsonForecast;
  	public transient final String DEGREE = "\u00b0";
+ 	public transient final String HIGH = "\u21D1";
+ 	public transient final String LOW = "\u21D3";
  	public transient final String PERCENT = "\u0025";
 	
 	public Forecast() {
@@ -48,7 +53,7 @@ public class Forecast implements Serializable {
 		Long l = Math.round( d );
 		return l.toString();
 	}
-	
+
 	public String getCurrentPressure() {
 		return JsonPath.read( getJsonForecast(), "$.currently.pressure" ).toString();
 	}
@@ -102,15 +107,40 @@ public class Forecast implements Serializable {
 	public String getCurrentWindSpeed() {
 		return JsonPath.read(  getJsonForecast(), "$.currently.windSpeed" ).toString();
 	}
+	
+	public String getDailySummary() {
+		return JsonPath.read( getJsonForecast(), "$.daily.summary" ).toString();
+	}
+	
+	public String getDailySummaryForDay( Integer day ) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeInMillis( Long.parseLong( JsonPath.read( getJsonForecast(), "$.daily.data[ " + day + " ].time" ).toString() ) * 1000L );
+		return new SimpleDateFormat( "EEE" ).format( cal.getTime() ) + ": " + JsonPath.read( getJsonForecast(), "$.daily.data[ " + day + " ].summary" ).toString();
+	}
+	
+	public String getHighForDay( Integer day ) {
+		StringBuffer sb = new StringBuffer();
+		sb.append( HIGH );
+		sb.append( Math.round( Float.parseFloat( JsonPath.read( getJsonForecast(), "$.daily.data[ " + day + " ].temperatureHigh" ).toString() ) ) );
+		sb.append( DEGREE );
+		sb.append( "F " );
+		return sb.toString();
+	}
+	
+	public String getLowForDay( Integer day ) {
+		StringBuffer sb = new StringBuffer();
+		sb.append( LOW );
+		sb.append( Math.round( Float.parseFloat( JsonPath.read( getJsonForecast(), "$.daily.data[ " + day + " ].temperatureLow" ).toString() ) ) );
+		sb.append( DEGREE );
+		sb.append( "F " );
+		return sb.toString();
+	}
 
 	public String getJsonForecast() {
 		return this.jsonForecast;
 	}
 	
 	public boolean isCurrent() {
-		System.out.println( "NOW: " + Calendar.getInstance().getTimeInMillis() );
-		System.out.println( "TIMESTAMP: " + TIMESTAMP.getTimeInMillis() );
-		System.out.println( "Math: " + ( Calendar.getInstance().getTimeInMillis() - TIMESTAMP.getTimeInMillis() ) / 100L / 60L / 60L );
 		return ( Calendar.getInstance().getTimeInMillis() - TIMESTAMP.getTimeInMillis() ) / 1000L / 60L / 60L < 1;
 	}
 	
