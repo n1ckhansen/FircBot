@@ -1,15 +1,7 @@
 package com.blackfez.apis.darksky;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -17,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
+import com.blackfez.applications.fircbot.utilities.IOUtils;
 import com.blackfez.models.geolocation.Location;
 import com.blackfez.models.weather.Forecast;
 
@@ -24,12 +17,13 @@ import com.blackfez.models.weather.Forecast;
 public class DarkSkyApiWrapper implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	public transient static final String DSKFILE = "dskForecasts.ser";
+	private transient static final String DSKFILE = "dskForecasts.ser";
 	private transient final String DSKEY = "37a15c6db486688f88dff78d57d2edb4";
 	private transient final String DSURL = "https://api.darksky.net/forecast/";
-	private Map<Location,Forecast> CACHE;
 	private transient static DarkSkyApiWrapper INSTANCE = null;
 	
+	private Map<Location,Forecast> CACHE;
+
 	private DarkSkyApiWrapper() {}
 	
 	public static DarkSkyApiWrapper getInstance() {
@@ -41,11 +35,7 @@ public class DarkSkyApiWrapper implements Serializable {
 			File f = new File( DSKFILE );
 			if( f.exists() ) {
 				try {
-					FileInputStream fis = new FileInputStream( f );
-					ObjectInputStream ois = new ObjectInputStream( fis );
-					INSTANCE = (DarkSkyApiWrapper) ois.readObject();
-					ois.close();
-					fis.close();
+					INSTANCE = (DarkSkyApiWrapper) IOUtils.LoadObject( DSKFILE );
 				}
 				catch( IOException | ClassNotFoundException e ) {
 					INSTANCE = new DarkSkyApiWrapper();
@@ -69,7 +59,6 @@ public class DarkSkyApiWrapper implements Serializable {
 	public Map<Location,Forecast> getCache() {
 		if( null == CACHE )
 			CACHE = new HashMap<Location,Forecast>();
-		System.out.println( "this.CACHE has keys: " + this.CACHE.keySet().size() );
 		return this.CACHE;
 	}
 	
@@ -78,11 +67,6 @@ public class DarkSkyApiWrapper implements Serializable {
 	}
 	
 	public Forecast getForcastForCoords( Location loc ) {
-		System.out.println( "DSK.Cache contains location key: " + this.getCache().containsKey( loc ) );
-		System.out.println( "Iterating keys");
-		for( Location l : this.getCache().keySet() ) {
-			System.out.println( "Key: " + l.getZip() );
-		}
 		Location f = null;
 		for( Location l : this.getCache().keySet() ) {
 			if( l.getZip().equals( loc.getZip() ) ) {
@@ -91,11 +75,9 @@ public class DarkSkyApiWrapper implements Serializable {
 			}
 		}
 		if( null != f && this.getCache().get( f ).isCurrent() ) {
-			System.out.println( "We've got a cached forecast" );
 			return this.getCache().get( f );
 		}
 		else if( null != f && ! this.getCache().get( f ).isCurrent() ) {
-			System.out.println( "We've got a stale cached forecast" );
 			this.getCache().remove( f );
 		}
 		Forecast forecast = consultDarkSky( loc );
@@ -106,15 +88,7 @@ public class DarkSkyApiWrapper implements Serializable {
 		Forecast f = new Forecast();
 		try {
 			URL url = new URL( String.format("%s%s/%s,%s", DSURL,DSKEY,loc.getLatitude(), loc.getLongitude() ) );
-			InputStream is = url.openStream();
-			InputStreamReader isr = new InputStreamReader( is );
-			BufferedReader br = new BufferedReader( isr );
-			StringBuilder sb = new StringBuilder();
-			String line;
-			while( ( line = br.readLine() ) != null ) {
-				sb.append( line );
-			}
-			f.setJsonForecast(  sb.toString() );
+			f.setJsonForecast( IOUtils.GetUrlResult( url ) );
 			this.CACHE.put( loc, f );
 			this.serializeTheStuff();
 		} 
@@ -157,18 +131,10 @@ public class DarkSkyApiWrapper implements Serializable {
 			i++;
 		}
 		return blurb.toString();
-		
 	}
 	
 	public void serializeTheStuff() throws IOException {
-		File f = new File( DSKFILE );
-		FileOutputStream fos = new FileOutputStream( f );
-		ObjectOutputStream oos = new ObjectOutputStream( fos );
-		oos.writeObject( this );
-		oos.close();
-		fos.close();
+		IOUtils.WriteObject( DSKFILE, this );
 	}
-	
-
 	
 }
