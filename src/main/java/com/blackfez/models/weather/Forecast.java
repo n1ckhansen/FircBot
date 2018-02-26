@@ -4,66 +4,53 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import javax.json.Json;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.jayway.jsonpath.JsonPath;
 
 public class Forecast implements Serializable {
 	
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
-	private Calendar TIMESTAMP;
-	private String jsonForecast;
  	public transient final String DEGREE = "\u00b0";
  	public transient final String HIGH = "\u21D1";
  	public transient final String LOW = "\u21D3";
  	public transient final String PERCENT = "\u0025";
-	
+ 	
+	private Calendar TIMESTAMP;
+	private String jsonForecast;
+
 	public Forecast() {
 		this.setTimestamp( Calendar.getInstance() );
 	}
 	
 	public String getCurrentApparentTemp() {
-		
-		return JsonPath.read( getJsonForecast(), "$.currently.apparentTemperature" ).toString();
+		return Long.toString( Math.round( Double.parseDouble( getJPath( "$.currently.apparentTemperature" ) ) ) );
 	}
 	
 	public String getCurrentCloudCoverage() {
-		Double d = Double.parseDouble( JsonPath.read( getJsonForecast(), "$.currently.cloudCover" ).toString() );
-		d = d * 100;
-		Long l = Math.round( d );
-		return l.toString();
+		return Long.toString( Math.round( Double.parseDouble( getJPath( "$.currently.cloudCover" ) ) * 100 ) );
 	}
 	
 	public String getCurrentDescription() {
-		return JsonPath.read( getJsonForecast(), "$.currently.summary" ).toString().replaceAll( "\"", "" );
+		return getJPath( "$.currently.summary" ).replaceAll( "\"", "" );
 	}
 	
 	public String getCurrentDewPoint() {
-		return JsonPath.read( getJsonForecast(), "$.currently.dewPoint" ).toString();
+		return Long.toString( Math.round( Double.parseDouble( getJPath( "$.currently.dewPoint" ) ) ) );
 	}
 	
 	public String getCurrentHumidity() {
-		Double d = Double.parseDouble( JsonPath.read( getJsonForecast(), "$.currently.humidity" ).toString() );
-		d = d * 100;
-		Long l = Math.round( d );
-		return l.toString();
+		return Long.toString( Math.round( Double.parseDouble( getJPath( "$.currently.humidity" ) ) * 100 ) );
 	}
 
 	public String getCurrentPressure() {
-		return JsonPath.read( getJsonForecast(), "$.currently.pressure" ).toString();
+		return Long.toString( Math.round( Double.parseDouble( getJPath( "$.currently.pressure" ) ) ) );
 	}
 
 	public String getCurrentTemp() {
-		return JsonPath.read( getJsonForecast(),  "$.currently.temperature" ).toString();
+		return Long.toString( Math.round( Double.parseDouble( getJPath( "$.currently.temperature" ) ) ) );
 	}
 
 	public String getCurrentWindDirection() {
-		Integer dir = Integer.parseInt( JsonPath.read( getJsonForecast(), "$.currently.windBearing" ).toString() ) % 360;
+		Integer dir = Integer.parseInt( getJPath( "$.currently.windBearing" ) ) % 360;
 		if( 348 <= dir || dir < 12  )
 			return "N";
 		else if( 12 <= dir && dir < 35 )
@@ -101,27 +88,27 @@ public class Forecast implements Serializable {
 	}
 	
 	public String getCurrentWindGust() {
-		return JsonPath.read( getJsonForecast(), "$.currently.windGust" ).toString();
+		return Long.toString( Math.round( Double.parseDouble( getJPath( "$.currently.windGust" ) ) ) );
 	}
 	
 	public String getCurrentWindSpeed() {
-		return JsonPath.read(  getJsonForecast(), "$.currently.windSpeed" ).toString();
+		return Long.toString( Math.round( Double.parseDouble( getJPath( "$.currently.windSpeed" ) ) ) );
 	}
 	
 	public String getDailySummary() {
-		return JsonPath.read( getJsonForecast(), "$.daily.summary" ).toString();
+		return getJPath( "$.daily.summary" );
 	}
 	
 	public String getDailySummaryForDay( Integer day ) {
 		Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis( Long.parseLong( JsonPath.read( getJsonForecast(), "$.daily.data[ " + day + " ].time" ).toString() ) * 1000L );
-		return new SimpleDateFormat( "EEE" ).format( cal.getTime() ) + ": " + JsonPath.read( getJsonForecast(), "$.daily.data[ " + day + " ].summary" ).toString();
+		cal.setTimeInMillis( Long.parseLong( getJPath( "$.daily.data[ " + day + " ].time" ) ) * 1000L );
+		return new SimpleDateFormat( "EEE" ).format( cal.getTime() ) + ": " + getJPath( "$.daily.data[ " + day + " ].summary" );
 	}
 	
 	public String getHighForDay( Integer day ) {
 		StringBuffer sb = new StringBuffer();
 		sb.append( HIGH );
-		sb.append( Math.round( Float.parseFloat( JsonPath.read( getJsonForecast(), "$.daily.data[ " + day + " ].temperatureHigh" ).toString() ) ) );
+		sb.append( Math.round( Float.parseFloat( getJPath( "$.daily.data[ " + day + " ].temperatureHigh" ) ) ) );
 		sb.append( DEGREE );
 		sb.append( "F " );
 		return sb.toString();
@@ -130,7 +117,7 @@ public class Forecast implements Serializable {
 	public String getLowForDay( Integer day ) {
 		StringBuffer sb = new StringBuffer();
 		sb.append( LOW );
-		sb.append( Math.round( Float.parseFloat( JsonPath.read( getJsonForecast(), "$.daily.data[ " + day + " ].temperatureLow" ).toString() ) ) );
+		sb.append( Math.round( Float.parseFloat( getJPath( "$.daily.data[ " + day + " ].temperatureLow" ) ) ) );
 		sb.append( DEGREE );
 		sb.append( "F " );
 		return sb.toString();
@@ -154,5 +141,9 @@ public class Forecast implements Serializable {
 	
 	public void setTimestamp( Calendar ts ) {
 		this.TIMESTAMP = ts;
+	}
+	
+	private String getJPath( String exp ) {
+		return JsonPath.read( getJsonForecast(), exp ).toString();
 	}
 }

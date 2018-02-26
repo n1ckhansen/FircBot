@@ -1,11 +1,8 @@
 package com.blackfez.applications.fircbot;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.rmi.NoSuchObjectException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,20 +11,24 @@ import org.jibble.pircbot.User;
 
 import com.blackfez.apis.darksky.DarkSkyApiWrapper;
 import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
+import com.blackfez.applications.fircbot.utilities.IOUtils;
 import com.blackfez.models.geolocation.Location;
 import com.blackfez.models.user.ChannelUser;
+import com.blackfez.models.user.UserUtils;
 
 
 public class FircBot extends PircBot {
 	
 	private static final String CHANUSERSFILE = "chanUsers.ser";
 	private Map<String,ChannelUser> ChanUsers;
+	private static final String BOTNAME = "FircBot";
 	
 	public FircBot() {
-		this.setName( "FircBot" );
+		this.setName( BOTNAME );
 		try {
 			this.initChanUsers();
-		} catch (ClassNotFoundException | IOException e) {
+		} 
+		catch (ClassNotFoundException | IOException e) {
 			System.out.println( "Fatal error encountered when deserializing ChannelUser cache" );
 			e.printStackTrace();
 			System.exit( 1 );
@@ -41,17 +42,9 @@ public class FircBot extends PircBot {
 		File f = new File( CHANUSERSFILE );
 		if( ! f.exists() ) {
 			this.ChanUsers = new HashMap<String,ChannelUser>();
-			FileOutputStream fos = new FileOutputStream( CHANUSERSFILE );
-			ObjectOutputStream oos = new ObjectOutputStream( fos );
-			oos.writeObject( this.ChanUsers );
-			oos.close();
-			fos.close();
+			IOUtils.WriteObject( CHANUSERSFILE, this.ChanUsers );
 		}
-		FileInputStream fis = new FileInputStream( f );
-		ObjectInputStream ois = new ObjectInputStream( fis );
-		this.ChanUsers = (Map<String,ChannelUser>) ois.readObject();
-		ois.close();
-		fis.close();
+		this.ChanUsers = (Map<String,ChannelUser>) IOUtils.LoadObject( CHANUSERSFILE );
 	}
 	
 	public void onMessage( String channel, String sender, String login, String hostname, String message ) {
@@ -60,45 +53,36 @@ public class FircBot extends PircBot {
 			sendMessage( channel, sender + ": The time is now " + time );
 		}
 		else if( message.equalsIgnoreCase( "wf" ) ) {
-			String[] tokens =  message.split( " " );
-			if( this.ChanUsers.containsKey( sender ) ) {
-				ChannelUser cu = this.ChanUsers.get( sender );
-				if( tokens.length >= 2 ) {
-					Location loc = new Location();
-					loc.setZip( tokens[ 1 ] );
-					cu.setLocation( loc );
-				}
-				if( cu.getLocation() == null )
-					cu.setLocation( new Location() );
+			ChannelUser cu;
+			try {
+				cu = UserUtils.UpdateUserLocation(sender, message, this.ChanUsers );
 				if( cu.getLocation().isZipSet() ) {
 					DarkSkyApiWrapper dsw = DarkSkyApiWrapper.getInstance();
 					sendMessage( channel, dsw.retrieveWeatherForecastForZip( cu.getLocation().getZip() ) );
 				}
 				else
 					sendMessage( channel, sender + ": try it with a zip code--wf 00000" );
+			} 
+			catch (NoSuchObjectException e) {
+				e.printStackTrace();
+				System.out.println( "Aborting 'wf' command. " );
 			}
 		}
 		else if( message.startsWith( "wx" ) ) {
-			String[] tokens = message.split( " " );
-			if( this.ChanUsers.containsKey( sender ) ) {
-				ChannelUser cu = this.ChanUsers.get( sender );
-				if( tokens.length >= 2 ) {
-					Location loc = new Location();
-					loc.setZip( tokens[ 1 ] );
-					cu.setLocation( loc );
-				}
-				if( cu.getLocation() == null ) 
-					cu.setLocation( new Location() );
+			ChannelUser cu;
+			try {
+				cu = UserUtils.UpdateUserLocation(sender, message, this.ChanUsers );
 				if( cu.getLocation().isZipSet() ) {
 					DarkSkyApiWrapper dsw = DarkSkyApiWrapper.getInstance();
 					sendMessage( channel, dsw.retrieveCurrentWeatherForZip( cu.getLocation().getZip() ) );
 				}
-				else {
+				else
 					sendMessage( channel, sender + ": try it with a zip code--wx 00000" );
-				}
 			}
-			else
-				sendMessage( channel, sender + ": Who TF are you?" );
+			catch( NoSuchObjectException e ) {
+				e.printStackTrace();
+				System.out.println( "Aborting 'wx' command" );
+			}
 		}
 		else if( message.toLowerCase().startsWith( "http://twitter.com") || message.toLowerCase().startsWith( "https://twitter.com") ) {
 			sendMessage( channel, sender + ": Working on the twit summary command" );
@@ -132,7 +116,6 @@ public class FircBot extends PircBot {
 		try {
 			this.serializeTheStuff();
 		} catch (IOException e) {
-			//TODO: handle this better when you're sober
 			System.out.println( "unable to serialze the stuff in onUserList()");
 			e.printStackTrace();
 		}
@@ -162,12 +145,7 @@ public class FircBot extends PircBot {
 		}
 	}
 	public void serializeTheStuff() throws IOException {
-		File f = new File( CHANUSERSFILE );
-		FileOutputStream fos = new FileOutputStream( f );
-		ObjectOutputStream oos = new ObjectOutputStream( fos );
-		oos.writeObject( this.ChanUsers );
-		oos.close();
-		fos.close();
+		IOUtils.WriteObject(CHANUSERSFILE, this.ChanUsers );
 		DarkSkyApiWrapper.getInstance().serializeTheStuff();
 		ZipCodeApiWrapper.getInstance().serializeTheStuff();
 	}
