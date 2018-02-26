@@ -144,6 +144,22 @@ public class DarkSkyApiWrapper implements Serializable {
 		return blurb.toString();
 	}
 	
+	public String retrieveWeatherForecastForZip( String zip ) {
+		Location loc = ZipCodeApiWrapper.getInstance().getLocation( zip );
+		Forecast f = this.getForcastForCoords( loc );
+		StringBuilder blurb = new StringBuilder();
+		blurb.append( String.format( "%s, %s %s: ", loc.getCity(), loc.getState(), loc.getZip() ) );
+		blurb.append( String.format( "%s ", f.getDailySummary() ) );
+		int i = 0;
+		while( i < 5 ) {
+			blurb.append( String.format( "%s ", f.getDailySummaryForDay( i ) ) );
+			blurb.append( String.format( "%s%s ", f.getHighForDay( i ), f.getLowForDay( i ) ) );
+			i++;
+		}
+		return blurb.toString();
+		
+	}
+	
 	public void serializeTheStuff() throws IOException {
 		File f = new File( DSKFILE );
 		FileOutputStream fos = new FileOutputStream( f );
