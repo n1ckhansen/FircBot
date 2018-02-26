@@ -52,7 +52,7 @@ public class FircBot extends PircBot {
 			String time = new java.util.Date().toString();
 			sendMessage( channel, sender + ": The time is now " + time );
 		}
-		else if( message.equalsIgnoreCase( "wf" ) ) {
+		else if( message.startsWith( "wf" ) ) {
 			ChannelUser cu;
 			try {
 				cu = UserUtils.UpdateUserLocation(sender, message, this.ChanUsers );
