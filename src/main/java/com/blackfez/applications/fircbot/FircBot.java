@@ -10,9 +10,9 @@ import org.jibble.pircbot.PircBot;
 import org.jibble.pircbot.User;
 
 import com.blackfez.apis.darksky.DarkSkyApiWrapper;
+import com.blackfez.apis.youtube.YouTubeApiWrapper;
 import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
 import com.blackfez.applications.fircbot.utilities.IOUtils;
-import com.blackfez.models.geolocation.Location;
 import com.blackfez.models.user.ChannelUser;
 import com.blackfez.models.user.UserUtils;
 
@@ -87,8 +87,21 @@ public class FircBot extends PircBot {
 		else if( message.toLowerCase().startsWith( "http://twitter.com") || message.toLowerCase().startsWith( "https://twitter.com") ) {
 			sendMessage( channel, sender + ": Working on the twit summary command" );
 		}
-		else if( message.toLowerCase().startsWith( "http://youtube.com") || message.toLowerCase().startsWith( "https://youtube.com") ) {
-			sendMessage( channel, sender + ": Working on the YouTube summary command" );
+		else if( 
+				message.toLowerCase().startsWith( "http://youtube.com") || 
+				message.toLowerCase().startsWith( "http://www.youtube.com" ) ||
+				message.toLowerCase().startsWith( "https://youtube.com") || 
+				message.toLowerCase().startsWith( "https://www.youtube.com" )
+				) {
+			Integer wart = message.indexOf( "watch?v=" );
+			String videoId = message.substring( wart + 8 , wart + 19 );
+			try {
+				sendMessage( channel, sender + ": " + YouTubeApiWrapper.getYouTubeInfoForId( videoId ) );
+			} 
+			catch (IOException e) {
+				System.out.println( "Issue encountered trying to scrape info for YouTube video: " + message + ".  Thought videoId was " + videoId );
+				e.printStackTrace();
+			}
 		}
 		
 		else if( message.toLowerCase().contains("fuck" ) ) {
