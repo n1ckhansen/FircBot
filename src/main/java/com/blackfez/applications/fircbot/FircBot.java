@@ -2,26 +2,31 @@ package com.blackfez.applications.fircbot;
 
 import java.io.File;
 import java.io.IOException;
-import java.rmi.NoSuchObjectException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jibble.pircbot.PircBot;
 import org.jibble.pircbot.User;
+import org.reflections.Reflections;
 
 import com.blackfez.apis.darksky.DarkSkyApiWrapper;
-import com.blackfez.apis.youtube.YouTubeApiWrapper;
 import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
+import com.blackfez.applications.fircbot.processors.MessageProcessor;
 import com.blackfez.applications.fircbot.utilities.IOUtils;
 import com.blackfez.models.user.ChannelUser;
-import com.blackfez.models.user.UserUtils;
 
 
 public class FircBot extends PircBot {
 	
 	private static final String CHANUSERSFILE = "chanUsers.ser";
 	private Map<String,ChannelUser> ChanUsers;
-	private static final String BOTNAME = "FircBot";
+	private static final String BOTNAME = "prospect";
+	private transient final Map<String,List<MessageProcessor>> processors = new HashMap<String,List<MessageProcessor>>();
 	
 	public FircBot() {
 		this.setName( BOTNAME );
@@ -41,87 +46,31 @@ public class FircBot extends PircBot {
 	private void initChanUsers() throws IOException, ClassNotFoundException {
 		File f = new File( CHANUSERSFILE );
 		if( ! f.exists() ) {
-			this.ChanUsers = new HashMap<String,ChannelUser>();
-			IOUtils.WriteObject( CHANUSERSFILE, this.ChanUsers );
+			this.setChanUsers(new HashMap<String,ChannelUser>());
+			IOUtils.WriteObject( CHANUSERSFILE, this.getChanUsers() );
 		}
-		this.ChanUsers = (Map<String,ChannelUser>) IOUtils.LoadObject( CHANUSERSFILE );
+		this.setChanUsers((Map<String,ChannelUser>) IOUtils.LoadObject( CHANUSERSFILE ));
 	}
 	
 	public void onMessage( String channel, String sender, String login, String hostname, String message ) {
-		if( message.equalsIgnoreCase( "time") ) {
-			String time = new java.util.Date().toString();
-			sendMessage( channel, sender + ": The time is now " + time );
-		}
-		else if( message.startsWith( "wf" ) ) {
-			ChannelUser cu;
-			try {
-				cu = UserUtils.UpdateUserLocation(sender, message, this.ChanUsers );
-				if( cu.getLocation().isZipSet() ) {
-					DarkSkyApiWrapper dsw = DarkSkyApiWrapper.getInstance();
-					sendMessage( channel, dsw.retrieveWeatherForecastForZip( cu.getLocation().getZip() ) );
-				}
-				else
-					sendMessage( channel, sender + ": try it with a zip code--wf 00000" );
-			} 
-			catch (NoSuchObjectException e) {
-				e.printStackTrace();
-				System.out.println( "Aborting 'wf' command. " );
-			}
-		}
-		else if( message.startsWith( "wx" ) ) {
-			ChannelUser cu;
-			try {
-				cu = UserUtils.UpdateUserLocation(sender, message, this.ChanUsers );
-				if( cu.getLocation().isZipSet() ) {
-					DarkSkyApiWrapper dsw = DarkSkyApiWrapper.getInstance();
-					sendMessage( channel, dsw.retrieveCurrentWeatherForZip( cu.getLocation().getZip() ) );
-				}
-				else
-					sendMessage( channel, sender + ": try it with a zip code--wx 00000" );
-			}
-			catch( NoSuchObjectException e ) {
-				e.printStackTrace();
-				System.out.println( "Aborting 'wx' command" );
-			}
-		}
-		else if( message.toLowerCase().startsWith( "http://twitter.com") || message.toLowerCase().startsWith( "https://twitter.com") ) {
-			sendMessage( channel, sender + ": Working on the twit summary command" );
-		}
-		else if( 
-				message.toLowerCase().startsWith( "http://youtube.com") || 
-				message.toLowerCase().startsWith( "http://www.youtube.com" ) ||
-				message.toLowerCase().startsWith( "https://youtube.com") || 
-				message.toLowerCase().startsWith( "https://www.youtube.com" )
-				) {
-			Integer wart = message.indexOf( "watch?v=" );
-			String videoId = message.substring( wart + 8 , wart + 19 );
-			try {
-				sendMessage( channel, sender + ": " + YouTubeApiWrapper.getYouTubeInfoForId( videoId ) );
-			} 
-			catch (IOException e) {
-				System.out.println( "Issue encountered trying to scrape info for YouTube video: " + message + ".  Thought videoId was " + videoId );
-				e.printStackTrace();
-			}
-		}
 		
-		else if( message.toLowerCase().contains("fuck" ) ) {
-			sendMessage( channel, sender + ": That's not nice.  Go eat soap." );
-			sendMessage( channel, "Shit, man, stop it." );
+		for( MessageProcessor mp : processors.get( channel ) ) {
+			mp.processMessage(sender, login, hostname, message);
 		}
 	}
 	
 	public void onUserList( String channel, User[] users ) {
 		for( User u : users ) {
-			if( this.ChanUsers.containsKey( u.getNick() ) ) {
-				this.ChanUsers.get( u.getNick() ).addChannel( channel );
-				this.ChanUsers.get( u.getNick() ).setUser( u );
+			if( this.getChanUsers().containsKey( u.getNick() ) ) {
+				this.getChanUsers().get( u.getNick() ).addChannel( channel );
+				this.getChanUsers().get( u.getNick() ).setUser( u );
 				if( !u.getNick().equals( this.getName() ) )
 					sendMessage( channel, u.getNick() + ": I already know about you" );
 			}
 			else {
-				this.ChanUsers.put( u.getNick(), new ChannelUser( u.getNick() ) );
-				this.ChanUsers.get( u.getNick() ).addChannel( channel );
-				this.ChanUsers.get( u.getNick() ).setUser( u );
+				this.getChanUsers().put( u.getNick(), new ChannelUser( u.getNick() ) );
+				this.getChanUsers().get( u.getNick() ).addChannel( channel );
+				this.getChanUsers().get( u.getNick() ).setUser( u );
 				if( !u.getNick().equals( this.getName() ) && !u.getNick().equals( "ChanServ" ) )
 					sendMessage( channel, u.getNick() + ": I'm tracking you" );
 			}
@@ -135,6 +84,22 @@ public class FircBot extends PircBot {
 	}
 	
 	public void onJoin( String channel, String sender, String login, String hostname ) {
+		if( !processors.containsKey( channel ) ) {
+			processors.put( channel, new ArrayList<MessageProcessor>() );
+			Reflections reflections = new Reflections( "com.blackfez.applications.fircbot.processors" );
+			Set<Class<? extends MessageProcessor>> p = reflections.getSubTypesOf( MessageProcessor.class );
+			for( Class<? extends MessageProcessor> mp : p ) {
+				try {
+					Constructor<?> cons = mp.getConstructor( FircBot.class, String.class );
+					processors.get( channel ).add( (MessageProcessor) cons.newInstance( this, channel ) );
+				} 
+				catch ( NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		System.out.println( processors.get( channel ) );
 		if( channel.replaceAll( "#","" ).toLowerCase() == "fezchat" ) {
 			if( sender.toLowerCase().equals( "fezboy" ) )
 				sendMessage( channel, sender + ": Welcome back, sir." );
@@ -154,13 +119,20 @@ public class FircBot extends PircBot {
 			else {
 				sendMessage( channel, "I'm baaaack!" );
 			}
-
 		}
 	}
 	public void serializeTheStuff() throws IOException {
-		IOUtils.WriteObject(CHANUSERSFILE, this.ChanUsers );
+		IOUtils.WriteObject(CHANUSERSFILE, this.getChanUsers() );
 		DarkSkyApiWrapper.getInstance().serializeTheStuff();
 		ZipCodeApiWrapper.getInstance().serializeTheStuff();
+	}
+
+	public Map<String,ChannelUser> getChanUsers() {
+		return ChanUsers;
+	}
+
+	public void setChanUsers(Map<String,ChannelUser> chanUsers) {
+		ChanUsers = chanUsers;
 	}
 
 }
