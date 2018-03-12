@@ -5,10 +5,12 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
 
 import org.jibble.pircbot.PircBot;
 import org.jibble.pircbot.User;
@@ -16,6 +18,7 @@ import org.reflections.Reflections;
 
 import com.blackfez.apis.darksky.DarkSkyApiWrapper;
 import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
+import com.blackfez.applications.fircbot.crontasks.CronTask;
 import com.blackfez.applications.fircbot.processors.MessageProcessor;
 import com.blackfez.applications.fircbot.utilities.IOUtils;
 import com.blackfez.models.user.ChannelUser;
@@ -25,8 +28,10 @@ public class FircBot extends PircBot {
 	
 	private static final String CHANUSERSFILE = "chanUsers.ser";
 	private Map<String,ChannelUser> ChanUsers;
-	private static final String BOTNAME = "prospect";
+	private static final String BOTNAME = "citadelOfJerrys";
 	private transient final Map<String,List<MessageProcessor>> processors = new HashMap<String,List<MessageProcessor>>();
+	private transient final Map<String,Timer> cron = new HashMap<String,Timer>();
+	public transient final static List<String> TWIT_LIST = Arrays.asList( "realDonaldTrump" );
 	
 	public FircBot() {
 		this.setName( BOTNAME );
@@ -100,6 +105,25 @@ public class FircBot extends PircBot {
 			}
 		}
 		System.out.println( processors.get( channel ) );
+		
+		if( !cron.containsKey( channel ) ) {
+			cron.put( channel,  new Timer() );
+			Reflections reflections = new Reflections( "com.blackfez.applications.fircbot.crontasks" );
+			Set<Class<? extends CronTask>> cts = reflections.getSubTypesOf( CronTask.class );
+			for( Class<? extends CronTask> ct : cts ) {
+				try {
+					Constructor<?> cons = ct.getConstructor( String.class, FircBot.class );
+					CronTask inst = (CronTask) cons.newInstance( channel, this );
+					cron.get( channel ).scheduleAtFixedRate( inst, Math.round( (Math.random() * 300000) ), inst.getInterval() );
+				}
+				catch( NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e ) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		System.out.println( cron.get( channel ) );
+		
 		if( channel.replaceAll( "#","" ).toLowerCase() == "fezchat" ) {
 			if( sender.toLowerCase().equals( "fezboy" ) )
 				sendMessage( channel, sender + ": Welcome back, sir." );
