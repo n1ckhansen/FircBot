@@ -5,14 +5,15 @@ import java.util.TimerTask;
 import com.blackfez.applications.fircbot.FircBot;
 
 public abstract class CronTask extends TimerTask {
-	
-	protected String Channel;
+
 	protected FircBot Bot;
 	protected Long INTERVAL;
 
-	protected CronTask( String channel, FircBot bot ) {
+	protected CronTask() {
 		super();
-		this.Channel = channel;
+	}
+	
+	public void setBot( FircBot bot ) {
 		this.Bot = bot;
 	}
 	

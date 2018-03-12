@@ -71,11 +71,41 @@ public class TwitterBank implements Serializable {
 		serializeStuff();
 	}
 	
+	public boolean channelFollowsUser( String channel, String user ) {
+		boolean isFollows = false;
+		for( String u : getLurksForChannel( channel ) ) {
+			if( u.equals( user ) ) {
+				isFollows = true;
+				break;
+			}
+		}
+		return isFollows;
+	}
+	
+	public Set<String> getChannels() {
+		return channelFollows.keySet();
+	}
+	
+	public Set<String> getLurks() {
+		Set<String> lurks = new HashSet<String>();
+		for( String channel : getChannels() ) {
+			lurks.addAll( getLurksForChannel( channel ) );
+		}
+		return lurks;
+	}
+	
 	public Set<String> getLurksForChannel( String channel ) {
 		if( channelFollows.containsKey( channel ) )
 			return channelFollows.get( channel );
 		else
 			return new HashSet<String>();
+	}
+	
+	public void removeLurkForChannel( String channel, String username ) {
+		if( channelFollows.containsKey( channel ) && channelFollows.get( channel ).contains( username ) ) {
+			channelFollows.get( channel ).remove( username );
+			serializeStuff();
+		}
 	}
 	
 	public void serializeStuff() {
