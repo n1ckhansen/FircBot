@@ -41,6 +41,7 @@ public class TwitterLurkerCronTask extends CronTask {
 		Twitter twit = TwitterFactory.getSingleton();
 		ResponseList<Status> twitlist = null;
 		for( String user : twitbank.getLurks() ) {
+			System.out.println( "Doing " + user );
 			try {
 				twitlist = twit.getUserTimeline( user );
 			} 
@@ -49,9 +50,13 @@ public class TwitterLurkerCronTask extends CronTask {
 				e.printStackTrace();
 			}			
 			for( Status status : twitlist ) {
+				System.out.println( "Status Id: " + status.getId() );
 				if( twitbank.addStatus( status ) )
+					System.out.println( "New MESSAGE!" );
 					for( String ch : twitbank.getChannels() ) {
+						System.out.println( "Do we alert " + ch );
 						if( twitbank.channelFollowsUser( ch, status.getUser().getName() ) ) {
+							System.out.println( "Yes we do!" );
 							Bot.sendMessage( ch, "@" + status.getUser().getScreenName() + " tweets: " + status.getText() );
 						}
 					}

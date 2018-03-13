@@ -33,7 +33,6 @@ public class FircBot extends PircBot {
 	private static final String BOTNAME = "citadelOfJerrys";
 	private transient final Map<String,List<MessageProcessor>> processors = new HashMap<String,List<MessageProcessor>>();
 	private transient final Timer cron = new Timer();
-	public transient final static List<String> TWIT_LIST = Arrays.asList( "realDonaldTrump" );
 	
 	public FircBot() {		
 
@@ -76,7 +75,8 @@ public class FircBot extends PircBot {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300000 ) ), ((CronTask) task).getInterval() );
+//			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300000 ) ), ((CronTask) task).getInterval() );
+			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300 ) ), ((CronTask) task).getInterval() );
 		}
 	}
 	

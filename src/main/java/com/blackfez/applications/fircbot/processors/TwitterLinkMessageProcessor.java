@@ -1,19 +1,7 @@
 package com.blackfez.applications.fircbot.processors;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.blackfez.applications.fircbot.FircBot;
 import com.blackfez.applications.fircbot.utilities.TwitterBank;
-
-import twitter4j.Query;
-import twitter4j.QueryResult;
-import twitter4j.ResponseList;
-import twitter4j.Status;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
-import twitter4j.api.TimelinesResources;
 
 public class TwitterLinkMessageProcessor extends MessageProcessor {
 	
@@ -24,7 +12,7 @@ public class TwitterLinkMessageProcessor extends MessageProcessor {
 	@Override
 	public void processMessage(String sender, String login, String hostname, String message) {
 		if( message.toLowerCase().startsWith( "http://twitter.com") || message.toLowerCase().startsWith( "https://twitter.com") ) {
-			//Bot.sendMessage( Channel, sender + ": Working on the twit summary command" );
+			
 		}
 		else if( message.toLowerCase().startsWith( "twitlurking" ) ) {
 			TwitterBank twitBank = TwitterBank.getInstance();

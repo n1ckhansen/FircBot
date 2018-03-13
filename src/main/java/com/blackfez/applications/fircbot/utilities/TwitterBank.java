@@ -20,7 +20,7 @@ public class TwitterBank implements Serializable {
 	public transient static final String TWITBANK_FILENAME = "twitbank.ser";
 	private transient static TwitterBank INSTANCE = null;
 	
-	private Map<User,Map<Long,Status>> twitBank = new HashMap<User,Map<Long,Status>>();
+	private Map<String,Map<Long,Status>> twitBank = new HashMap<String,Map<Long,Status>>();
 	private Map<String,Set<String>> channelFollows = new HashMap<String,Set<String>>();
 	
 	private TwitterBank() {}
@@ -46,13 +46,17 @@ public class TwitterBank implements Serializable {
 	
 	public boolean addStatus( Status status ) {
 		boolean isNew = false;
-		if( !twitBank.containsKey( status.getUser() ) )
-			twitBank.put( status.getUser(), new HashMap<Long,Status>() );
-		if( !twitBank.get( status.getUser() ).containsKey( status.getId() ) ) {
-			twitBank.get( status.getUser() ).put( status.getId(), status );
+		if( !twitBank.containsKey( status.getUser().getName() ) )
+			System.out.println( "Adding user '" + status.getUser().getName() );
+			twitBank.put( status.getUser().getName(), new HashMap<Long,Status>() );
+		if( !twitBank.get( status.getUser().getName() ).containsKey( status.getId() ) ) {
+			System.out.println( "User missing status " + status.getId() + "'" );
+			twitBank.get( status.getUser().getName() ).put( status.getId(), status );
 			isNew = true;
 			serializeStuff();
 		}
+		else
+			System.out.println( status.getUser().getName() + " already has status " + status.getId() );
 		return isNew;
 	}
 	
