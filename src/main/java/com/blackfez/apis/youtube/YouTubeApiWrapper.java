@@ -24,7 +24,6 @@ import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoListResponse;
 
 public class YouTubeApiWrapper {
-	private static final String API_KEY = "AIzaSyCpJXZcnuq52lmqTEqEb75_q0rv6hc8Uhw";
 	private static final String APPLICATION_NAME = "youtubescraper";
 	private static final File DATA_STORE_DIR = new File( System.getProperty( "user.home" ), ".credentials/youtubescraper" );
 	private static FileDataStoreFactory DATA_STORE_FACTORY;

@@ -34,5 +34,6 @@ public class Application {
 			throw e;
 		}
 		bot.joinChannel( "#fezchat" );
+		//bot.joinChannel( "#pircbot" );
 	}
 }
