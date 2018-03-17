@@ -12,7 +12,7 @@ public class TwitterLinkMessageProcessor extends MessageProcessor {
 	@Override
 	public void processMessage(String sender, String login, String hostname, String message) {
 		if( message.toLowerCase().startsWith( "http://twitter.com") || message.toLowerCase().startsWith( "https://twitter.com") ) {
-			
+			// TODO Bored with this presently.  I've decided I like twitlurking better.  We'll cut a new feature branch and circle back.
 		}
 		else if( message.toLowerCase().startsWith( "twitlurking" ) ) {
 			TwitterBank twitBank = TwitterBank.getInstance();

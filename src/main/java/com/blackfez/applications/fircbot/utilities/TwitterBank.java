@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import twitter4j.Status;
-import twitter4j.User;
 
 public class TwitterBank implements Serializable {
 
@@ -46,17 +45,13 @@ public class TwitterBank implements Serializable {
 	
 	public boolean addStatus( Status status ) {
 		boolean isNew = false;
-		if( !twitBank.containsKey( status.getUser().getName() ) )
-			System.out.println( "Adding user '" + status.getUser().getName() );
-			twitBank.put( status.getUser().getName(), new HashMap<Long,Status>() );
-		if( !twitBank.get( status.getUser().getName() ).containsKey( status.getId() ) ) {
-			System.out.println( "User missing status " + status.getId() + "'" );
-			twitBank.get( status.getUser().getName() ).put( status.getId(), status );
+		if( !twitBank.containsKey( status.getUser().getScreenName() ) )
+			twitBank.put( status.getUser().getScreenName(), new HashMap<Long,Status>() );
+		if( !twitBank.get( status.getUser().getScreenName() ).containsKey( status.getId() ) ) {
+			twitBank.get( status.getUser().getScreenName() ).put( status.getId(), status );
 			isNew = true;
 			serializeStuff();
 		}
-		else
-			System.out.println( status.getUser().getName() + " already has status " + status.getId() );
 		return isNew;
 	}
 	

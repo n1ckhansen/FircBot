@@ -6,7 +6,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,8 +74,7 @@ public class FircBot extends PircBot {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-//			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300000 ) ), ((CronTask) task).getInterval() );
-			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300 ) ), ((CronTask) task).getInterval() );
+			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300000 ) ), ((CronTask) task).getInterval() );
 		}
 	}
 	
