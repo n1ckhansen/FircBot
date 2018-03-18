@@ -132,7 +132,7 @@ public class FircBot extends PircBot {
 			if( sender.toLowerCase().equals( "fezboy" ) )
 				sendMessage( channel, sender + ": Welcome back, sir." );
 			else if( !sender.equalsIgnoreCase( "fircbot" ) ) {
-				sendMessage( channel, sender + ": s'up beyotch?!" );
+				sendMessage( channel, sender + ": s'up yo?!" );
 				boolean fezout = true;
 				for( User u : getUsers( channel ) ) {
 					if( u.getNick().toLowerCase().equals( "fezboy" ) ) {
