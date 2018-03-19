@@ -10,7 +10,7 @@ import twitter4j.TwitterFactory;
 
 public class TwitterLurkerCronTask extends CronTask {
 	
-	private TwitterBank twitbank = TwitterBank.getInstance();
+	private static final TwitterBank twitbank = TwitterBank.getInstance();
 	private static TwitterLurkerCronTask INSTANCE;
 	
 

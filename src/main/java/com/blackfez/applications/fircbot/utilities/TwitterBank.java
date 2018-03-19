@@ -22,7 +22,9 @@ public class TwitterBank implements Serializable {
 	private Map<String,Map<Long,Status>> twitBank = new HashMap<String,Map<Long,Status>>();
 	private Map<String,Set<String>> channelFollows = new HashMap<String,Set<String>>();
 	
-	private TwitterBank() {}
+	private TwitterBank() {
+		serializeStuff();
+	}
 	
 	public static TwitterBank getInstance() {
 		if( null != INSTANCE )
