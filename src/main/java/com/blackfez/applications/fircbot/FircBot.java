@@ -29,7 +29,8 @@ public class FircBot extends PircBot {
 	
 	private static final String CHANUSERSFILE = "chanUsers.ser";
 	private Map<String,ChannelUser> ChanUsers;
-	private static final String BOTNAME = "citadelOfJerrys";
+	//private static final String BOTNAME = "citadelOfJerrys";
+	private static final String BOTNAME = "fircbotMenuFeature";
 	private transient final Map<String,List<MessageProcessor>> processors = new HashMap<String,List<MessageProcessor>>();
 	private transient final Timer cron = new Timer();
 	
@@ -130,7 +131,7 @@ public class FircBot extends PircBot {
 		if( channel.replaceAll( "#","" ).toLowerCase().equals("fezchat" ) ) {
 			if( sender.toLowerCase().equals( "fezboy" ) )
 				sendMessage( channel, sender + ": Welcome back, sir." );
-			else if( !sender.equalsIgnoreCase( "fircbot" ) ) {
+			else if( !sender.equalsIgnoreCase( BOTNAME ) ) {
 				sendMessage( channel, sender + ": s'up yo?!" );
 				boolean fezout = true;
 				for( User u : getUsers( channel ) ) {

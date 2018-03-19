@@ -1,7 +1,6 @@
 package com.blackfez.applications.fircbot.crontasks;
 
 import java.net.URL;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
