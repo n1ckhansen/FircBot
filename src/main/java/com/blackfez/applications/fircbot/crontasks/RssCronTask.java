@@ -1,7 +1,6 @@
 package com.blackfez.applications.fircbot.crontasks;
 
 import java.net.URL;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -15,7 +14,7 @@ public class RssCronTask extends CronTask {
 	
 	private RssCronTask() {
 		super();
-		INTERVAL = 60000L;
+		INTERVAL = 900000L;
 	}
 
 	public static final RssCronTask getInstance() {
