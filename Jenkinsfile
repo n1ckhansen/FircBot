@@ -8,8 +8,8 @@ pipeline {
     }
     stage('Build') {
       steps {
-        sh 'gradle clean'
-        sh 'gradle assembleDist'
+        sh './gradlew clean'
+        sh './gradlew assembleDist'
       }
     }
   }
