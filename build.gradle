@@ -14,10 +14,26 @@ buildscript {
 
 plugins {
     id "com.jfrog.bintray" version "1.7"
+    id 'org.ajoberstar' version '2.1.1'
 }
 
 group = "com.blackfez"
-version = "0.0.1"
+version = "0.1"
+
+def currentBranch = grgit.branch.current().getName()
+def buildnumber = "LOCAL"
+def wart = ""
+
+if( System.env.BRANCH_NAME ) {
+    currentBranch = System.env.BRANCH_NAME
+    buildnumber = System.env.BUILD_NUMBER
+}
+
+if( currentBranch != 'master' ) {
+    wart = currentBranch + "."
+}
+
+version = version + "." + wart + buildnumber
 
 allprojects {
     repositories {
@@ -48,7 +64,7 @@ bintray {
         licenses = ['GPL-3.0']
         vcsUrl = 'https://github.com/n1ckhansen/FircBot.git'
         version {
-            name = '0.0.1'
+            name = project.property( "version" )
             released = new Date()
         }
     }
@@ -75,7 +91,7 @@ dependencies {
     compile 'org.reflections:reflections:0.9.11' 
     compile 'org.twitter4j:twitter4j-core:4.+'
     compile 'com.rometools:rome:1.9.0'
-    compile 'com.blackfez:FezCore:0.0.1'
+    compile 'com.blackfez:FezCore:0.1.18'
 }
 
 task sourcesJar( type: Jar, dependsOn: classes) {
@@ -97,9 +113,9 @@ artifacts {
 def pomConfig = {
     licenses {
         license {
-            name "The Apache Software License, Version 2.0"
-            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
-            distribution "repo"
+            name "The GNU General Public License v3.0"
+            url "http://www.gnu.org/licenses/gpl-3.0.en.txt"
+            distribution "blackfezjava"
         }
     }
     developers {
@@ -126,7 +142,7 @@ publishing {
             }
             groupId 'com.blackfez'
             artifactId 'fircbot'
-            version '0.0.1'
+            version project.property( 'version' )
             pom.withXml {
                 def root = asNode()
                 root.appendNode('description', 'IRC bot as personal assistant based on PircBot')
