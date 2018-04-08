@@ -30,7 +30,7 @@ pipeline {
       junit 'build/test-results/**/*.xml'
     }
   }
-  publishHTML ([
+  publishHTML ( target: [
     allowMissing: true, 
     alwaysLinkToLastBuild: true, 
     keepAll: false, 
