@@ -7,8 +7,9 @@ import java.util.Set;
 import org.jibble.pircbot.User;
 
 import com.blackfez.models.geolocation.Location;
+import com.blackfez.models.user.interfaces.IChannelUser;
 
-public class ChannelUser implements Serializable {
+public class ChannelUser implements Serializable, IChannelUser {
 	
 	/**
 	 * 
