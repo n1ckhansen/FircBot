@@ -20,7 +20,7 @@ pipeline {
           keepAll: false, 
           reportDir: 'build/reports/tests/test', 
           reportFiles: 'index.html', 
-          reportName: 'Tests Report', 
+          reportName: 'Latest Tests Report', 
           reportTitles: ''
         ])
       }
