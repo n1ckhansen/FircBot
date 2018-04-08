@@ -12,6 +12,7 @@ pipeline {
         sh './gradlew check'
         sh './gradlew buildEnvironment'
         sh './gradlew properties'
+        sh './gradlew test'
         sh './gradlew assembleDist'
       }
     }
