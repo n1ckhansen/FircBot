@@ -30,4 +30,13 @@ pipeline {
       junit 'build/test-results/**/*.xml'
     }
   }
+  publishHTML ([
+    allowMissing: true, 
+    alwaysLinkToLastBuild: true, 
+    keepAll: false, 
+    reportDir: 'build/reports/testst/test', 
+    reportFiles: 'index.html', 
+    reportName: 'Tests Report', 
+    reportTitles: ''
+  ])
 }
