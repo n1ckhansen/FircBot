@@ -14,6 +14,15 @@ pipeline {
         sh './gradlew properties'
         sh './gradlew test'
         sh './gradlew assembleDist'
+        publishHTML ( target: [
+          allowMissing: true, 
+          alwaysLinkToLastBuild: true, 
+          keepAll: false, 
+          reportDir: 'build/reports/testst/test', 
+          reportFiles: 'index.html', 
+          reportName: 'Tests Report', 
+          reportTitles: ''
+        ])
       }
     }
     stage( 'Stage' ) {
@@ -30,13 +39,4 @@ pipeline {
       junit 'build/test-results/**/*.xml'
     }
   }
-  publishHTML ( target: [
-    allowMissing: true, 
-    alwaysLinkToLastBuild: true, 
-    keepAll: false, 
-    reportDir: 'build/reports/testst/test', 
-    reportFiles: 'index.html', 
-    reportName: 'Tests Report', 
-    reportTitles: ''
-  ])
 }
