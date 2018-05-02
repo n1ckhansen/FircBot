@@ -49,8 +49,6 @@ public class ConfigurationManager {
 				);
 		builder.setAutoSave( true );
 		config = builder.getConfiguration();
-		System.out.println( f.getPath() );
-		
 	}
 	
 	public ConfigurationManager( String appName ) throws ConfigurationException {
@@ -69,10 +67,6 @@ public class ConfigurationManager {
 	}
 	
 	public String getString( String xpath, String defaultValue ) {
-		Iterator<String> itr = config.getKeys();
-		while( itr.hasNext() ) {
-			System.out.println( itr.next() );
-		}
 		if( !config.containsKey( xpath ) ) {
 			System.out.println( "doesn't have key " + xpath );
 			config.addProperty( xpath, defaultValue );
@@ -85,9 +79,7 @@ public class ConfigurationManager {
 	}
 	
 	public void setString( String xpath, String value ) {
-		System.out.println( "Seeting " + xpath + " to " + value );
 		config.setProperty( xpath, value );
-		System.out.println( "done" );
 	}
 
 }

@@ -15,10 +15,10 @@ public interface IChannelUserManager extends Serializable {
 	public void addChannelUser( String nic, IChannelUser user );
 
 	public void addUserChannel( String nic, String channel );
+	
+	public User getUserForNic( String nic );
 
 	public Map<String,IChannelUser> getUserMap();
-	
-	public void loadUserMap() throws IOException, ClassNotFoundException;
 	
 	public void processOnUserList( String channel, User[] users );
 	
@@ -30,4 +30,7 @@ public interface IChannelUserManager extends Serializable {
 	
 	public void saveUserMap() throws IOException;
 
+	public void setUserForNic( String nic, User user );
+	
+	public void setUserMap( Map<String,IChannelUser> map ) throws IOException ;
 }

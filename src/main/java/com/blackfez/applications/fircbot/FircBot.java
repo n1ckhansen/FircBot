@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +20,7 @@ import org.reflections.Reflections;
 import com.blackfez.apis.darksky.DarkSkyApiWrapper;
 import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
 import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
+import com.blackfez.applications.fircbot.utilities.ReflectionUtilities;
 import com.blackfez.applications.fircbot.crontasks.CronTask;
 import com.blackfez.applications.fircbot.processors.MessageProcessor;
 import com.blackfez.models.user.ChannelUserManager;
@@ -34,6 +34,7 @@ public class FircBot extends PircBot {
 	private transient ConfigurationManager cm;
 	private transient final String CONFIG_FILE = System.getProperty( "user.home" ) + File.separator + ".fezconfig" + File.separator + "fircbot" + File.separator + "FircBot.xml";
 	private static String DEFAULT_BOTNAME = "fircbot";
+	public static String BOTNET_NAME_KEY = "botName";
 	private transient final Map<String,List<MessageProcessor>> processors = new HashMap<String,List<MessageProcessor>>();
 	private transient final Timer cron = new Timer();
 	private transient ZipCodeApiWrapper zipWrapper;
@@ -41,22 +42,9 @@ public class FircBot extends PircBot {
 	
 	public FircBot() throws ClassNotFoundException, IOException, ConfigurationException {		
 		this.cm = new ConfigurationManager( "fircbot", new File( CONFIG_FILE ) );
-		this.setName( cm.getString( "botName", DEFAULT_BOTNAME ) );
+		this.setName( cm.getString( BOTNET_NAME_KEY, DEFAULT_BOTNAME ) );
+		this.userManager = new ChannelUserManager( cm );
 		this.initCron();
-		try {
-			this.userManager = new ChannelUserManager( cm );
-		} 
-		catch (ClassNotFoundException e) {
-			System.out.println( "Unable to convert serialized user map to Map<String,IChannelUser" );
-			System.out.println( "This kind of breaks things so we're going to kind of just quit now" );
-			e.printStackTrace();
-			System.exit( 1 );
-		} catch (IOException e) {
-			System.out.println( "Unable to read serialized user map  file" );
-			System.out.println( "This kind of breaks things so we're going to kind of just quit now" );
-			e.printStackTrace();
-			System.exit( 1 );
-		}
 		zipWrapper = new ZipCodeApiWrapper( cm );
 		dskWrapper = new DarkSkyApiWrapper( cm, zipWrapper );
 	}
@@ -89,12 +77,12 @@ public class FircBot extends PircBot {
 	}
 	public void onUserList( String channel, User[] users ) {
 		userManager.processOnUserList( channel, users );
-		try {
-			userManager.saveUserMap();
-		} catch (IOException e) {
-			System.out.println( "ChannelUserManager unable to serialze the user map in onUserList()");
-			e.printStackTrace();
-		}
+//		try {
+//			userManager.saveUserMap();
+//		} catch (IOException e) {
+//			System.out.println( "ChannelUserManager unable to serialze the user map in onUserList()");
+//			e.printStackTrace();
+//		}
 	}
 	
 	public void onJoin( String channel, String sender, String login, String hostname ) {
@@ -104,39 +92,26 @@ public class FircBot extends PircBot {
 			Set<Class<? extends MessageProcessor>> p = reflections.getSubTypesOf( MessageProcessor.class );
 			for( Class<? extends MessageProcessor> mp : p ) {
 				Constructor<?> cons;
+				//Generic processor constructor params
+				Class<?>[] genericProcessor = { FircBot.class,String.class,ConfigurationManager.class };
+				//Weather processors constructor parms
+				Class<?>[] weatherProcessor = { FircBot.class,String.class,ConfigurationManager.class, DarkSkyApiWrapper.class };
+
+				//Lets try the various constructor types we know of.  Perhaps this can be more dynamic in the future?
 				try {
-					cons = mp.getConstructor( FircBot.class, String.class, ConfigurationManager.class, ZipCodeApiWrapper.class );
-					processors.get( channel ).add( (MessageProcessor) cons.newInstance( this, channel, cm, zipWrapper ) );
-				} 
-				catch (NoSuchMethodException e) {
-					try {
-						cons = mp.getConstructor( FircBot.class, String.class, ConfigurationManager.class );
-						processors.get( channel ).add( (MessageProcessor) cons.newInstance( this, channel, cm ) );
-					} 
-					catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+					if( null != ReflectionUtilities.GetConstructorByParameters( mp.getClass(), genericProcessor ) ) {
+						cons = ReflectionUtilities.GetConstructorByParameters( mp.getClass(), genericProcessor );
+						processors.get( channel ).add( (MessageProcessor)cons.newInstance( this, channel, cm ) );
 					}
-				} 
-				catch (SecurityException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					else if( null != ReflectionUtilities.GetConstructorByParameters( mp.getClass(), weatherProcessor ) ) {
+						cons = ReflectionUtilities.GetConstructorByParameters( mp.getClass(), weatherProcessor );
+						processors.get( channel ).add( (MessageProcessor)cons.newInstance( this, channel, cm, dskWrapper ) );
+					}
 				}
-				catch (InstantiationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} 
-				catch (IllegalAccessException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} 
-				catch (IllegalArgumentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} 
-				catch (InvocationTargetException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						System.out.println( "Unable to find a constructor matching known patterns for class " + mp.getName() );
+						e.printStackTrace();
+						System.exit( 1 );
 				}
 			}
 		}

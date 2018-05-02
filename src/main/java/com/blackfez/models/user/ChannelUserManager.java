@@ -20,10 +20,22 @@ public class ChannelUserManager implements IChannelUserManager {
 	private transient String mapFileKey = "dataFiles/channelUserMap";
 
 	private Map<String,IChannelUser> userMap;
+	private transient Map<String,User> fuserToPuserMap;
 	
+	@SuppressWarnings("unchecked")
 	public ChannelUserManager( ConfigurationManager configManager ) throws ClassNotFoundException, IOException {
 		this.cm = configManager;
-		loadUserMap();
+		File f = new File( cm.getString( mapFileKey,"channelUserMap.xml" ) );
+		if( ! f.exists() ) {
+			System.out.println( "chanuserfile did not exist.  Creating object." );
+			this.setUserMap(new HashMap<String,IChannelUser>());
+			System.out.println( "chanuser map created.  Let's save it.");
+			ObjectSerializerIO.WriteObject( cm.getString( mapFileKey ), this.userMap );
+			System.out.println( "Successfully saved it." );
+		}
+		this.setUserMap( (Map<String,IChannelUser>) ObjectSerializerIO.LoadObject( cm.getString( mapFileKey ) ) );
+		System.out.println( "Successful load of just saved user map." );
+		fuserToPuserMap = new HashMap<String,User>();
 	}
 	
 	@Override
@@ -53,33 +65,35 @@ public class ChannelUserManager implements IChannelUserManager {
 		return userMap;
 	}
 
-	@SuppressWarnings("unchecked")
-	// which is bullshit because java generics have type erasure at runtime
-	@Override
-	public void loadUserMap() throws IOException, ClassNotFoundException {
-		File f = new File( cm.getString( mapFileKey,"channelUserMap.xml" ) );
-		if( ! f.exists() ) {
-			this.setUserMap(new HashMap<String,IChannelUser>());
-			ObjectSerializerIO.WriteObject( cm.getString( mapFileKey ), this.userMap );
-		}
-		Object payload = ObjectSerializerIO.LoadObject( cm.getString( mapFileKey ) );
-		// at least we're checking it's fricking map, yo.
-		if( payload instanceof Map<?,?> )  {
-		    this.setUserMap((Map<String,IChannelUser>) payload );
-		}
-	}
-
 	@Override
 	public void processOnUserList(String channel, User[] users) {
+		System.out.println( "Processing OnUserList" );
+		System.out.println( "Processing for channel " + channel );
+		System.out.println( users.length );
 		for( User u : users ) {
 			if( this.userMap.containsKey( u.getNick() ) ) {
+				System.out.println( "Found key for user " + u.getNick() );
 				this.userMap.get( u.getNick() ).addChannel( channel );
-				this.userMap.get( u.getNick() ).setUser( u );
+				System.out.println( "Added channel " + channel + " for user " + userMap.get( u.getNick() ).getNic() );
+				this.setUserForNic( u.getNick(), u );
+				System.out.println( "Set User " + u.getNick() + " for user " + userMap.get( u.getNick() ).getNic() );
 			}
 			else {
+				System.out.println( "Lets make a key for user " + u.getNick() );
 				this.userMap.put( u.getNick(), new ChannelUser( u.getNick() ) );
+				System.out.println( "Made user " + userMap.get( u.getNick() ) + " for user " + u.getNick() );
 				this.userMap.get( u.getNick() ).addChannel( channel );
-				this.userMap.get( u.getNick() ).setUser( u );
+				System.out.println( "Added channel " + channel + " for user " + userMap.get( u.getNick() ).getNic() );
+				this.setUserForNic( u.getNick(), u );
+				System.out.println( "Set User " + u.getNick() + " for user " + userMap.get( u.getNick() ).getNic() );
+			}
+			try {
+				saveUserMap();
+			} 
+			catch (IOException e) {
+				System.out.println( "Failed to save map after processing user " + u.getNick());
+				e.printStackTrace();
+				System.exit( 1 );
 			}
 		}
 	}
@@ -101,8 +115,9 @@ public class ChannelUserManager implements IChannelUserManager {
 		ObjectSerializerIO.WriteObject( cm.getString( mapFileKey ), this.userMap );
 	}
 	
-	private void setUserMap( Map<String,IChannelUser> map ) {
+	public void setUserMap( Map<String,IChannelUser> map ) throws IOException {
 		this.userMap = map;
+		this.saveUserMap();
 	}
 
 	@Override
@@ -110,6 +125,16 @@ public class ChannelUserManager implements IChannelUserManager {
 		if( userMap.containsKey( nic ) ) {
 			userMap.get( nic ).setLocation( loc );
 		}
+	}
+
+	@Override
+	public User getUserForNic(String nic) {
+		return fuserToPuserMap.get( nic );
+	}
+
+	@Override
+	public void setUserForNic(String nic, User user) {
+		fuserToPuserMap.put( nic, user );
 	}
 
 }
