@@ -5,13 +5,18 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
+
 public class DarkSkyWrapperTests {
 	
 	private DarkSkyApiWrapper dsw;
 
 	@Before
 	public void setUp() throws Exception {
-		dsw = DarkSkyApiWrapper.getInstance();
+		ConfigurationManager cm = new ConfigurationManager( "DSWTests" );
+		ZipCodeApiWrapper zwrap = new ZipCodeApiWrapper( cm );
+		dsw = new DarkSkyApiWrapper( cm, zwrap );
 	}
 
 	@After
@@ -21,11 +26,6 @@ public class DarkSkyWrapperTests {
 	@Test
 	public final void testGetInstanceIsInstance() {
 		assertEquals(DarkSkyApiWrapper.class, dsw.getClass() );
-	}
-
-	@Test
-	public final void testGetInstanceIsSingleton() {
-		assertSame( dsw, DarkSkyApiWrapper.getInstance() );
 	}
 
 	@Test

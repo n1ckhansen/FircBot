@@ -4,23 +4,27 @@ import java.rmi.NoSuchObjectException;
 
 import com.blackfez.apis.darksky.DarkSkyApiWrapper;
 import com.blackfez.applications.fircbot.FircBot;
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.models.user.ChannelUser;
 import com.blackfez.models.user.UserUtils;
+import com.blackfez.models.user.interfaces.IChannelUser;
 
 public class WeatherForecastMessageProcessor extends MessageProcessor {
+	
+	private DarkSkyApiWrapper dsw;
 
-	public WeatherForecastMessageProcessor(FircBot bot, String channel) {
-		super(bot, channel);
+	public WeatherForecastMessageProcessor(FircBot bot, String channel, ConfigurationManager configManager, DarkSkyApiWrapper dskWrapper ) {
+		super(bot, channel, configManager);
+		dsw = dskWrapper;
 	}
 
 	@Override
 	public void processMessage(String sender, String login, String hostname, String message) {
 		if( message.startsWith( "wf" ) ) {
-			ChannelUser cu;
+			IChannelUser cu;
 			try {
 				cu = UserUtils.UpdateUserLocation(sender, message, Bot.getChanUsers() );
 				if( cu.getLocation().isZipSet() ) {
-					DarkSkyApiWrapper dsw = DarkSkyApiWrapper.getInstance();
 					Bot.sendMessage( Channel, dsw.retrieveWeatherForecastForZip( cu.getLocation().getZip() ) );
 				}
 				else

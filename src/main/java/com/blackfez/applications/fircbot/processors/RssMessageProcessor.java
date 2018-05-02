@@ -4,15 +4,17 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import com.blackfez.applications.fircbot.FircBot;
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.applications.fircbot.utilities.RssBank;
 
 public class RssMessageProcessor extends MessageProcessor {
 	
 	private transient static final String nl = System.getProperty( "line.separator" );
-	private static final RssBank rssbank = RssBank.getInstance();
+	private RssBank rssbank;
 
-	public RssMessageProcessor(FircBot bot, String channel) {
-		super(bot, channel);
+	public RssMessageProcessor(FircBot bot, String channel, ConfigurationManager configManager ) {
+		super(bot, channel, configManager);
+		rssbank = new RssBank( cm );
 		// TODO Auto-generated constructor stub
 	}
 

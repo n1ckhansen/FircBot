@@ -4,27 +4,18 @@ import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.applications.fircbot.utilities.RssBank;
 import com.rometools.rome.feed.synd.SyndEntry;
 
 public class RssCronTask extends CronTask {
 	
-	private static RssCronTask INSTANCE;
-	private static final RssBank rssbank = RssBank.getInstance();
+	private final RssBank rssbank;
 	
-	private RssCronTask() {
-		super();
+	public RssCronTask( ConfigurationManager configManager ) {
+		super( configManager );
+		rssbank = new RssBank( cm );
 		INTERVAL = 900000L;
-	}
-
-	public static final RssCronTask getInstance() {
-		if( null != INSTANCE )
-			return INSTANCE;
-		synchronized( RssCronTask.class ) {
-			if( null == INSTANCE )
-				INSTANCE = new RssCronTask();
-		}
-		return INSTANCE;
 	}
 
 	@Override

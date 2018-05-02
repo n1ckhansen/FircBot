@@ -1,5 +1,6 @@
 package com.blackfez.applications.fircbot.crontasks;
 
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.applications.fircbot.utilities.TwitterBank;
 
 import twitter4j.ResponseList;
@@ -10,37 +11,24 @@ import twitter4j.TwitterFactory;
 
 public class TwitterLurkerCronTask extends CronTask {
 	
-	private static final TwitterBank twitbank = TwitterBank.getInstance();
-	private static TwitterLurkerCronTask INSTANCE;
+	private TwitterBank twitbank;
 	
 
-	private TwitterLurkerCronTask() {
-		super();
+	public TwitterLurkerCronTask( ConfigurationManager configManager ) {
+		super( configManager );
 		INTERVAL = 60000L;
-	}
-	
-	public static final TwitterLurkerCronTask getInstance() {
-		if( null != INSTANCE ) 
-			return INSTANCE;
-		synchronized( TwitterLurkerCronTask.class ) {
-			if( null == INSTANCE ) {
-				INSTANCE = new TwitterLurkerCronTask();
-			}
-		}
-		return INSTANCE;
 	}
 	
 	@Override
 	public Long getInterval() {
 		return INTERVAL;
 	}
-	
-	
 
 	@Override
 	public void run() {
 		System.out.println( "Running TwitLurker" );
 		Twitter twit = TwitterFactory.getSingleton();
+		TwitterBank twitbank = new TwitterBank( cm );
 		ResponseList<Status> twitlist = null;
 		for( String user : twitbank.getLurks() ) {
 			try {

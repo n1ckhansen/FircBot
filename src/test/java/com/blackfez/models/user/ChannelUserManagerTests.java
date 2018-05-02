@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.models.user.interfaces.IChannelUser;
 import com.blackfez.models.user.interfaces.IChannelUserManager;
 
@@ -23,7 +24,7 @@ public class ChannelUserManagerTests {
 
 	@Before
 	public void setUp() throws Exception {
-		cum = new ChannelUserManager();
+		cum = new ChannelUserManager( new ConfigurationManager( "FircBotTests" ) );
 		channelUser1 = Mockito.mock( IChannelUser.class );
 		channelUser2 = Mockito.mock( IChannelUser.class );
 	}

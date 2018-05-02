@@ -4,11 +4,12 @@ import java.io.IOException;
 
 import com.blackfez.apis.youtube.YouTubeApiWrapper;
 import com.blackfez.applications.fircbot.FircBot;
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 
 public class YouTubeScraperMessageProcessor extends MessageProcessor {
 
-	public YouTubeScraperMessageProcessor(FircBot bot, String channel) {
-		super(bot, channel);
+	public YouTubeScraperMessageProcessor(FircBot bot, String channel, ConfigurationManager configManager) {
+		super(bot, channel, configManager);
 	}
 
 	@Override
