@@ -34,6 +34,7 @@ public class ChannelUserTests {
 		assertEquals( TEST_NIC, testUser.getNic() );
 	}
 	
+	/*
 	@Test
 	public final void testConstructorCreatesEmptyChannel() {
 		assertEquals( 0, testUser.getChannels().size() );
@@ -57,6 +58,7 @@ public class ChannelUserTests {
 		assertEquals( 3, testUser.getChannels().size() );
 		assertEquals( channelsValues, testUser.getChannels() );
 	}
+	*/
 
 	@Test
 	public final void testGetLocationAfterChange() {
@@ -75,6 +77,7 @@ public class ChannelUserTests {
 		assertEquals( TEST_NIC, testUser.getNic() );
 	}
 
+	/*
 	@Test
 	public final void testRemoveChannel() {
 		Set<String> channelsValues = new HashSet<String>( Arrays.asList( TEST_CHANNEL_1, TEST_CHANNEL_3 ) );
@@ -83,5 +86,6 @@ public class ChannelUserTests {
 		assertEquals( 2, testUser.getChannels().size() );
 		assertEquals( channelsValues, testUser.getChannels() );
 	}
+	*/
 
 }
