@@ -99,13 +99,18 @@ public class FircBot extends PircBot {
 
 				//Lets try the various constructor types we know of.  Perhaps this can be more dynamic in the future?
 				try {
-					if( null != ReflectionUtilities.GetConstructorByParameters( mp.getClass(), genericProcessor ) ) {
-						cons = ReflectionUtilities.GetConstructorByParameters( mp.getClass(), genericProcessor );
+					if( null != ReflectionUtilities.GetConstructorByParameters( mp, genericProcessor ) ) {
+						cons = ReflectionUtilities.GetConstructorByParameters( mp, genericProcessor );
 						processors.get( channel ).add( (MessageProcessor)cons.newInstance( this, channel, cm ) );
 					}
-					else if( null != ReflectionUtilities.GetConstructorByParameters( mp.getClass(), weatherProcessor ) ) {
-						cons = ReflectionUtilities.GetConstructorByParameters( mp.getClass(), weatherProcessor );
+					else if( null != ReflectionUtilities.GetConstructorByParameters( mp, weatherProcessor ) ) {
+						cons = ReflectionUtilities.GetConstructorByParameters( mp, weatherProcessor );
 						processors.get( channel ).add( (MessageProcessor)cons.newInstance( this, channel, cm, dskWrapper ) );
+					}
+					else {
+						System.out.println( "No pattern defined for processor " + mp.getName() );
+						System.out.println( "Exiting application." );
+						System.exit( 1 );
 					}
 				}
 				catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {

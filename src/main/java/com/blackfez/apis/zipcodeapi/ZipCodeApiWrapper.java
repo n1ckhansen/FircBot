@@ -8,12 +8,11 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.JsonObject;
-
 import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.fezcore.utilities.IO.ObjectSerializerIO;
 import com.blackfez.fezcore.utilities.IO.URLUtils;
 import com.blackfez.models.geolocation.*;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public final class ZipCodeApiWrapper implements Serializable {
