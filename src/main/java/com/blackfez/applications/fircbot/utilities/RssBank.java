@@ -35,21 +35,21 @@ public class RssBank implements Serializable {
 	public RssBank( ConfigurationManager configManager ) {
 		cm = configManager;
 		try {
-			File f = new File( cm.getString( CHANNEL_SUBS_KEY, "rssBankChannelSubs.xml" ) );
+			File f = new File( cm.getStringValue( CHANNEL_SUBS_KEY, "rssBankChannelSubs.xml" ) );
 			if( !f.exists() ) 
 				channelSubs = new HashMap<URL,Set<String>>();
 			else 
-				channelSubs = (Map<URL,Set<String>>)ObjectSerializerIO.LoadObject( cm.getString( CHANNEL_SUBS_KEY ) );
-			f = new File( cm.getString( ENTRIES_KEY, "rssBankEntries.xml" ) );
+				channelSubs = (Map<URL,Set<String>>)ObjectSerializerIO.LoadObject( cm.getStringValue( CHANNEL_SUBS_KEY ) );
+			f = new File( cm.getStringValue( ENTRIES_KEY, "rssBankEntries.xml" ) );
 			if( !f.exists() ) 
 				entries = new HashMap<URL,Set<SyndEntry>>();
 			else 
-				entries = (Map<URL,Set<SyndEntry>>)ObjectSerializerIO.LoadObject( cm.getString( ENTRIES_KEY ) );
-			f = new File( cm.getString( FEED_MAP_KEY, "rssBankFeedMap.xml" ) );
+				entries = (Map<URL,Set<SyndEntry>>)ObjectSerializerIO.LoadObject( cm.getStringValue( ENTRIES_KEY ) );
+			f = new File( cm.getStringValue( FEED_MAP_KEY, "rssBankFeedMap.xml" ) );
 			if( !f.exists() )
 				urlFeedMap = new HashMap<URL,SyndFeed>();
 			else
-				urlFeedMap = (Map<URL,SyndFeed>)ObjectSerializerIO.LoadObject( cm.getString( FEED_MAP_KEY ) );
+				urlFeedMap = (Map<URL,SyndFeed>)ObjectSerializerIO.LoadObject( cm.getStringValue( FEED_MAP_KEY ) );
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -128,9 +128,9 @@ public class RssBank implements Serializable {
 	
 	public void serializeStuff() {
 		try {
-			ObjectSerializerIO.WriteObject( cm.getString(CHANNEL_SUBS_KEY), channelSubs );
-			ObjectSerializerIO.WriteObject( cm.getString(ENTRIES_KEY), entries );
-			ObjectSerializerIO.WriteObject( cm.getString(FEED_MAP_KEY), urlFeedMap );
+			ObjectSerializerIO.WriteObject( cm.getStringValue(CHANNEL_SUBS_KEY), channelSubs );
+			ObjectSerializerIO.WriteObject( cm.getStringValue(ENTRIES_KEY), entries );
+			ObjectSerializerIO.WriteObject( cm.getStringValue(FEED_MAP_KEY), urlFeedMap );
 		} 
 		catch (IOException e) {
 			System.out.println( "Error encountered when serializing RssBank object[s]" );

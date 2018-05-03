@@ -1,36 +1,36 @@
 package com.blackfez.models.user.interfaces;
 
-import java.io.IOException;
-import java.io.Serializable;
 import java.util.Map;
+import java.util.Set;
 
 import org.jibble.pircbot.User;
 
-import com.blackfez.models.geolocation.Location;
+public interface IChannelUserManager {
 
-public interface IChannelUserManager extends Serializable {
+	public void addChannelUser( String nic, IChannelUser user ); 
 	
-	public IChannelUser getUser( String nic );
-
-	public void addChannelUser( String nic, IChannelUser user );
-
-	public void addUserChannel( String nic, String channel );
+	public void addUser( String nic, IChannelUser user, String channel );
 	
-	public User getUserForNic( String nic );
+	public void addUserToChannel( String channel, IChannelUser user );
+
+	public IChannelUser getChannelUser( String nic );
+	
+	public Map<String,Set<IChannelUser>> getChannelUserTracker();
 
 	public Map<String,IChannelUser> getUserMap();
 	
+	public Set<IChannelUser> getUsersForChannel( String channel );
+	
 	public void processOnUserList( String channel, User[] users );
-	
+
 	public void removeChannelUser( String nic );
+	
+	public void removeUserFromChannel( String channel, IChannelUser user );
+	
+	public void removeUser( IChannelUser user );
+	
+	public void setChannelUserTracker( Map<String,Set<IChannelUser>> map );
 
-	public void removeUserChannel( String nic, String channel );
-	
-	public void updateUserLocation( String nic, Location loc );
-	
-	public void saveUserMap() throws IOException;
+	public void setUserMap( Map<String,IChannelUser> map );
 
-	public void setUserForNic( String nic, User user );
-	
-	public void setUserMap( Map<String,IChannelUser> map ) throws IOException ;
 }

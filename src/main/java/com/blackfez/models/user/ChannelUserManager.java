@@ -3,138 +3,174 @@ package com.blackfez.models.user;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.jibble.pircbot.User;
 
 import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
-import com.blackfez.fezcore.utilities.IO.*;
-import com.blackfez.models.geolocation.Location;
+import com.blackfez.fezcore.utilities.IO.ObjectSerializerIO;
 import com.blackfez.models.user.interfaces.IChannelUser;
 import com.blackfez.models.user.interfaces.IChannelUserManager;
 
 public class ChannelUserManager implements IChannelUserManager {
-	
-	private static final transient long serialVersionUID = 1L;
-	private transient ConfigurationManager cm;
-	private transient String mapFileKey = "dataFiles/channelUserMap";
 
+	private ConfigurationManager cm;
+	private static final String MAP_FILE_KEY = "dataFiles/channelUserMap";
+	private static final String TRACKER_FILE_KEY = "dataFiles/channelUserTracker";
 	private Map<String,IChannelUser> userMap;
-	private transient Map<String,User> fuserToPuserMap;
+	private Map<String,Set<IChannelUser>> channelUserTracker;
 	
-	@SuppressWarnings("unchecked")
-	public ChannelUserManager( ConfigurationManager configManager ) throws ClassNotFoundException, IOException {
-		this.cm = configManager;
-		File f = new File( cm.getString( mapFileKey,"channelUserMap.xml" ) );
-		if( ! f.exists() ) {
-			System.out.println( "chanuserfile did not exist.  Creating object." );
-			this.setUserMap(new HashMap<String,IChannelUser>());
-			System.out.println( "chanuser map created.  Let's save it.");
-			ObjectSerializerIO.WriteObject( cm.getString( mapFileKey ), this.userMap );
-			System.out.println( "Successfully saved it." );
-		}
-		this.setUserMap( (Map<String,IChannelUser>) ObjectSerializerIO.LoadObject( cm.getString( mapFileKey ) ) );
-		System.out.println( "Successful load of just saved user map." );
-		fuserToPuserMap = new HashMap<String,User>();
+	public ChannelUserManager( ConfigurationManager configManager ) {
+		cm = configManager;
+		initChanUserMap();
+		initChanUserTracker();
 	}
 	
-	@Override
-	public void addChannelUser(String nic, IChannelUser user) {
-		if( !userMap.containsKey( nic ) )
-			userMap.put( nic, user );
-		else {
-			//raise some kind of error?
-			//do we care?
-		}
+	public void addChannelUser( String nic, IChannelUser user ) {
+		if( userMap.containsKey( nic ) )
+			return;
+		userMap.put( nic, user );
+		serializeUserMap();
 	}
-
-	@Override
-	public void addUserChannel(String nic, String channel) {
-		if( userMap.containsKey( nic ) ) {
-			userMap.get( nic ).addChannel( channel );
-		}
+	
+	public void addUser( String nic, IChannelUser user, String channel ) {
+		addChannelUser( nic, user );
+		addUserToChannel( channel, user);
 	}
-
-	@Override
-	public IChannelUser getUser(String nic) {
+	
+	public void addUserToChannel( String channel, IChannelUser user ) {
+		if( !channelUserTracker.containsKey( channel ) )
+			channelUserTracker.put( channel, new HashSet<IChannelUser>() );
+		for( IChannelUser u : channelUserTracker.get( channel ) ) {
+			if( u.getNic().equals( user.getNic() ) )
+				return;
+		}
+		channelUserTracker.get( channel ).add( user );
+		serializeChannelUserTracker();
+	}
+	
+	public IChannelUser getChannelUser( String nic ) {
 		return userMap.get( nic );
 	}
-
-	@Override
-	public Map<String, IChannelUser> getUserMap() {
-		return userMap;
+	
+	public Map<String,Set<IChannelUser>> getChannelUserTracker() {
+		return this.channelUserTracker;
 	}
-
-	@Override
-	public void processOnUserList(String channel, User[] users) {
-		System.out.println( "Processing OnUserList" );
-		System.out.println( "Processing for channel " + channel );
-		System.out.println( users.length );
-		for( User u : users ) {
-			if( this.userMap.containsKey( u.getNick() ) ) {
-				System.out.println( "Found key for user " + u.getNick() );
-				this.userMap.get( u.getNick() ).addChannel( channel );
-				System.out.println( "Added channel " + channel + " for user " + userMap.get( u.getNick() ).getNic() );
-				this.setUserForNic( u.getNick(), u );
-				System.out.println( "Set User " + u.getNick() + " for user " + userMap.get( u.getNick() ).getNic() );
-			}
-			else {
-				System.out.println( "Lets make a key for user " + u.getNick() );
-				this.userMap.put( u.getNick(), new ChannelUser( u.getNick() ) );
-				System.out.println( "Made user " + userMap.get( u.getNick() ) + " for user " + u.getNick() );
-				this.userMap.get( u.getNick() ).addChannel( channel );
-				System.out.println( "Added channel " + channel + " for user " + userMap.get( u.getNick() ).getNic() );
-				this.setUserForNic( u.getNick(), u );
-				System.out.println( "Set User " + u.getNick() + " for user " + userMap.get( u.getNick() ).getNic() );
-			}
+	
+	public Map<String,IChannelUser> getUserMap() {
+		return this.userMap;
+	}
+	
+	public Set<IChannelUser> getUsersForChannel( String channel ) {
+		if( channelUserTracker.containsKey( channel ) )
+			return channelUserTracker.get( channel );
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void initChanUserMap() {
+		File f = new File( cm.getStringValue(MAP_FILE_KEY, "channelUserMap.xml" ) );
+		if( !f.exists() ) {
+			this.setUserMap( new HashMap<String,IChannelUser>() );
+			serializeUserMap();
+		}
+		try {
+			setUserMap( (Map<String,IChannelUser>) ObjectSerializerIO.LoadObject( f ) );
+		} 
+		catch (ClassNotFoundException | IOException e) {
+			System.out.println( "Unable to load user/User map from disk.  Exiting application" );
+			e.printStackTrace();
+			System.exit( 1 );
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void initChanUserTracker() {
+		File f = new File( cm.getStringValue( TRACKER_FILE_KEY, "channelUserTracker.xml" ) );
+		if( !f.exists() ) {
+			this.setChannelUserTracker( new HashMap<String, Set<IChannelUser>>() );
 			try {
-				saveUserMap();
-			} 
-			catch (IOException e) {
-				System.out.println( "Failed to save map after processing user " + u.getNick());
+				ObjectSerializerIO.WriteObject( f, getChannelUserTracker() );
+			}
+			catch( IOException e ) {
+				System.out.println( "Unable to serialize channel/user map.  Exiting application" );
 				e.printStackTrace();
 				System.exit( 1 );
 			}
 		}
-	}
-
-	@Override
-	public void removeChannelUser(String nic) {
-		if( userMap.containsKey( nic ) )
-			userMap.remove( nic );
-		//raise error of some kind if not containskey?
-	}
-
-	@Override
-	public void removeUserChannel(String nic, String channel) {
-		userMap.get( nic ).removeChannel( channel );
-	}
-
-	@Override
-	public void saveUserMap() throws IOException {
-		ObjectSerializerIO.WriteObject( cm.getString( mapFileKey ), this.userMap );
-	}
-	
-	public void setUserMap( Map<String,IChannelUser> map ) throws IOException {
-		this.userMap = map;
-		this.saveUserMap();
-	}
-
-	@Override
-	public void updateUserLocation(String nic, Location loc) {
-		if( userMap.containsKey( nic ) ) {
-			userMap.get( nic ).setLocation( loc );
+		try {
+			setChannelUserTracker( (Map<String,Set<IChannelUser>>) ObjectSerializerIO.LoadObject( f ) );
+		}
+		catch (ClassNotFoundException | IOException e) {
+			System.out.println( "Unable to load channel/User map from disk.  Exiting application" );
+			e.printStackTrace();
+			System.exit( 1 );
 		}
 	}
-
-	@Override
-	public User getUserForNic(String nic) {
-		return fuserToPuserMap.get( nic );
+	
+	public void processOnUserList( String channel, User[] users ) {
+		for( User u : users ) {
+			if( !userMap.containsKey( u.getNick() ) ) {
+				ChannelUser user = new ChannelUser( u.getNick() );
+				user.setPuser( u );
+				addChannelUser( u.getNick(), user );
+			}
+			else {
+				getChannelUser( u.getNick() ).setPuser( u );
+			}
+			addUserToChannel( channel, getChannelUser( u.getNick() ) );
+		}
 	}
-
-	@Override
-	public void setUserForNic(String nic, User user) {
-		fuserToPuserMap.put( nic, user );
+	
+	public void removeChannelUser( String nic ) {
+		userMap.remove( nic );
+	}
+	
+	public void removeUserFromChannel( String channel, IChannelUser user ) {
+		channelUserTracker.get( channel ).remove( user );
+	}
+	
+	public void removeUser( IChannelUser user ) {
+		if( userMap.containsKey( user.getNic() ) )
+			removeChannelUser( user.getNic() );
+		for( String channel : channelUserTracker.keySet() ) {
+			if( channelUserTracker.get( channel ).contains( user ) )
+				removeUserFromChannel( channel, user );
+		}
+	}
+	
+	private void serializeChannelUserTracker() {
+		File f = new File( cm.getStringValue( TRACKER_FILE_KEY ) );
+		try {
+			ObjectSerializerIO.WriteObject( f, this.getChannelUserTracker() );
+		}
+		catch (IOException e) {
+			System.out.println( "Unable to serialize channel/User map.  Exiting application" );
+			e.printStackTrace();
+			System.exit( 1 );
+		}
+	}
+	
+	private void serializeUserMap() {
+		File f = new File( cm.getStringValue(MAP_FILE_KEY ) );
+		try {
+			ObjectSerializerIO.WriteObject( f, this.getUserMap() );
+		}
+		catch (IOException e) {
+			System.out.println( "Unable to serialize user/User map.  Exiting application" );
+			e.printStackTrace();
+			System.exit( 1 );
+		}
+	}
+	
+	public void setChannelUserTracker( Map<String,Set<IChannelUser>> map ) {
+		this.channelUserTracker = map;
+	}
+	
+	public void setUserMap( Map<String,IChannelUser> map ) {
+		this.userMap = map;
 	}
 
 }

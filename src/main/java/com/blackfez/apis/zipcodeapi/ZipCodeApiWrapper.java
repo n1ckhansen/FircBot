@@ -32,14 +32,14 @@ public final class ZipCodeApiWrapper implements Serializable {
 	@SuppressWarnings("unchecked")
 	public ZipCodeApiWrapper( ConfigurationManager configManager ) throws ClassNotFoundException, IOException {
 		cm = configManager;
-		API = cm.getString( API_KEY, "WtH14qwX8hJ75fsnRKjiZRCZVNvPNwJR8RvqPvDBVNebRN9QctOFS5RJQtjwCtHB" );
-		File f = new File( cm.getString( LOOKUPS_KEY, "zipCodeCache.xml" ) );
+		API = cm.getStringValue( API_KEY, "WtH14qwX8hJ75fsnRKjiZRCZVNvPNwJR8RvqPvDBVNebRN9QctOFS5RJQtjwCtHB" );
+		File f = new File( cm.getStringValue( LOOKUPS_KEY, "zipCodeCache.xml" ) );
 		if( !f.exists() ) {
 			LOOKUPS = new HashMap<String,Location>();
 			serializeTheStuff();
 		}
 		else
-			this.LOOKUPS = (Map<String,Location>)ObjectSerializerIO.LoadObject( cm.getString( LOOKUPS_KEY ) );
+			this.LOOKUPS = (Map<String,Location>)ObjectSerializerIO.LoadObject( cm.getStringValue( LOOKUPS_KEY ) );
 	}
 	
 	public String getLatitude( String zip ) {
@@ -85,7 +85,7 @@ public final class ZipCodeApiWrapper implements Serializable {
 	}
 	
 	public void serializeTheStuff() throws IOException {
-		ObjectSerializerIO.WriteObject( cm.getString(LOOKUPS_KEY),  LOOKUPS );
+		ObjectSerializerIO.WriteObject( cm.getStringValue(LOOKUPS_KEY),  LOOKUPS );
 	}
 
 }

@@ -28,16 +28,16 @@ public class TwitterBank implements Serializable {
 	public TwitterBank( ConfigurationManager configManager ) {
 		cm = configManager;
 		try {
-			File f = new File( cm.getString( TWIT_BANK_MAP_KEY, "twitBankMap.xml" ) );
+			File f = new File( cm.getStringValue( TWIT_BANK_MAP_KEY, "twitBankMap.xml" ) );
 			if( !f.exists() )
 				twitBank = new HashMap<String,Map<Long,Status>>();
 			else
-				twitBank = (Map<String,Map<Long,Status>>)ObjectSerializerIO.LoadObject( cm.getString( TWIT_BANK_MAP_KEY ) );
-			f = new File( cm.getString( CHAN_FOLLOWS_MAP_KEY, "twitBankChannelFollowsMap.xml" ) );
+				twitBank = (Map<String,Map<Long,Status>>)ObjectSerializerIO.LoadObject( cm.getStringValue( TWIT_BANK_MAP_KEY ) );
+			f = new File( cm.getStringValue( CHAN_FOLLOWS_MAP_KEY, "twitBankChannelFollowsMap.xml" ) );
 			if( !f.exists() ) 
 				channelFollows = new HashMap<String,Set<String>>();
 			else
-				channelFollows = (Map<String,Set<String>>)ObjectSerializerIO.LoadObject( cm.getString( CHAN_FOLLOWS_MAP_KEY ) );
+				channelFollows = (Map<String,Set<String>>)ObjectSerializerIO.LoadObject( cm.getStringValue( CHAN_FOLLOWS_MAP_KEY ) );
 		} 
 		catch (ClassNotFoundException | IOException e) {
 			// TODO Auto-generated catch block
@@ -112,8 +112,8 @@ public class TwitterBank implements Serializable {
 	
 	public void serializeStuff() {
 		try {
-			ObjectSerializerIO.WriteObject( cm.getString( TWIT_BANK_MAP_KEY ), twitBank );
-			ObjectSerializerIO.WriteObject( cm.getString( CHAN_FOLLOWS_MAP_KEY ), channelFollows );
+			ObjectSerializerIO.WriteObject( cm.getStringValue( TWIT_BANK_MAP_KEY ), twitBank );
+			ObjectSerializerIO.WriteObject( cm.getStringValue( CHAN_FOLLOWS_MAP_KEY ), channelFollows );
 		} 
 		catch (IOException e) {
 			System.out.println( "Error encountered when serializing TwitterBank object" );

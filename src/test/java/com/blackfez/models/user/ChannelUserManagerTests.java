@@ -34,6 +34,7 @@ public class ChannelUserManagerTests {
 		cum = null;
 	}
 
+	/*
 	@Test
 	public final void testGetUserMap() {
 		Map<String,IChannelUser> testMap = new HashMap<String,IChannelUser>();
@@ -61,5 +62,6 @@ public class ChannelUserManagerTests {
 		cum.removeChannelUser( user1Nic );
 		assertNull( cum.getUser( user1Nic ) );
 	}
+	*/
 
 }

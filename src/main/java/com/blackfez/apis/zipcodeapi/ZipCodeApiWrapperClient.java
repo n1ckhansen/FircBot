@@ -18,7 +18,7 @@ public class ZipCodeApiWrapperClient {
 			System.out.println( "zipwrap is " + zipwrap.toString() );
 			System.out.println( "lat is '" + zipwrap.getLatitude("51503") + "'" );
 			System.out.println( "lng is '" + zipwrap.getLongitude("51503") + "'" );
-		} catch (ClassNotFoundException | IOException | ConfigurationException e) {
+		} catch (ClassNotFoundException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

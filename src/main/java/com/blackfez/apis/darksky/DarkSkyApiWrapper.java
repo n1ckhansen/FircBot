@@ -32,14 +32,14 @@ public class DarkSkyApiWrapper implements Serializable {
 	public DarkSkyApiWrapper( ConfigurationManager configManager, ZipCodeApiWrapper zcw ) throws ClassNotFoundException, IOException {
 		cm = configManager;
 		zipWrap = zcw;
-		DSKEY = cm.getString( DSKEY_KEY, "37a15c6db486688f88dff78d57d2edb4" );
-		File f = new File( cm.getString( DSCACHE_KEY, "dskWrapperCache.xml" ) );
+		DSKEY = cm.getStringValue( DSKEY_KEY, "37a15c6db486688f88dff78d57d2edb4" );
+		File f = new File( cm.getStringValue( DSCACHE_KEY, "dskWrapperCache.xml" ) );
 		if( !f.exists() ) {
 			CACHE = new HashMap<Location,Forecast>();
 			serializeTheStuff();
 		}
 		else
-			CACHE = (Map<Location,Forecast>)ObjectSerializerIO.LoadObject( cm.getString( DSCACHE_KEY ) );
+			CACHE = (Map<Location,Forecast>)ObjectSerializerIO.LoadObject( cm.getStringValue( DSCACHE_KEY ) );
 	}
 	
 	public Forecast getForcastForZip( String zip ) {
@@ -126,7 +126,7 @@ public class DarkSkyApiWrapper implements Serializable {
 	}
 	
 	public void serializeTheStuff() throws IOException {
-		ObjectSerializerIO.WriteObject( cm.getString( DSCACHE_KEY ), CACHE );
+		ObjectSerializerIO.WriteObject( cm.getStringValue( DSCACHE_KEY ), CACHE );
 	}
 	
 }

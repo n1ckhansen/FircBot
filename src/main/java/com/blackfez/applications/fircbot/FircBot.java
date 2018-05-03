@@ -41,12 +41,12 @@ public class FircBot extends PircBot {
 	private transient DarkSkyApiWrapper dskWrapper;
 	
 	public FircBot() throws ClassNotFoundException, IOException, ConfigurationException {		
-		this.cm = new ConfigurationManager( "fircbot", new File( CONFIG_FILE ) );
-		this.setName( cm.getString( BOTNET_NAME_KEY, DEFAULT_BOTNAME ) );
-		this.userManager = new ChannelUserManager( cm );
-		this.initCron();
+		this.cm = new ConfigurationManager( CONFIG_FILE );
+		this.setName( cm.getStringValue( BOTNET_NAME_KEY, DEFAULT_BOTNAME ) );
 		zipWrapper = new ZipCodeApiWrapper( cm );
 		dskWrapper = new DarkSkyApiWrapper( cm, zipWrapper );
+		this.userManager = new ChannelUserManager( cm );
+		this.initCron();
 	}
 	
 	public Map<String,IChannelUser> getChanUsers() {

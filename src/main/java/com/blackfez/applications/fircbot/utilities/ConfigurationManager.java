@@ -3,9 +3,7 @@ package com.blackfez.applications.fircbot.utilities;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Iterator;
 
-import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
@@ -14,72 +12,72 @@ import org.apache.commons.configuration2.tree.xpath.XPathExpressionEngine;
 
 public class ConfigurationManager {
 	
-	private FileBasedConfigurationBuilder<XMLConfiguration> builder;
-	private Configuration config;
+	private XMLConfiguration config;
+
+	public ConfigurationManager( String configFile ) {
+		this( new File( configFile ) );
+	}
 	
-	public ConfigurationManager( String appName, File path ) throws ConfigurationException {
-		File f = path ;
-		if( !f.exists() ) {
-			if( f.getParentFile() != null )
-				f.getParentFile().mkdirs();
-			try {
-				FileWriter fw = new FileWriter( f );
-				fw.write( "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" );
-				fw.write( System.getProperty( "line.separator" ) );
-				fw.write( "<configuration />" );
-				fw.write( System.getProperty( "line.separator" ) );
-				fw.flush();
-				fw.close();
-			} 
-			catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+	public ConfigurationManager( File configFile ) {
+		validateFilePathExists( configFile );
+		FileBasedConfigurationBuilder<XMLConfiguration> builder = initBuilder( configFile );
+		try {
+			config = builder.getConfiguration();
+		} 
+		catch (ConfigurationException e) {
+			System.out.println( "Unable to create configuration object.  Exiting application" );
+			e.printStackTrace();
+			System.exit( 1 );
 		}
-		Parameters params = new Parameters();
-		builder = new FileBasedConfigurationBuilder<XMLConfiguration>( XMLConfiguration.class )
-				.configure( 
-						params.xml()
-						.setFileName( 
-								f.getPath()
-						)
-						.setExpressionEngine( 
-								new XPathExpressionEngine() 
-						) 
-				);
-		builder.setAutoSave( true );
-		config = builder.getConfiguration();
 	}
 	
-	public ConfigurationManager( String appName ) throws ConfigurationException {
-		this( appName, new File(
-				new StringBuffer()
-				.append( System.getProperty( "user.home" ) )
-				.append( File.separator )
-				.append( ".fezconfigs" )
-				.append( File.separator )
-				.append( appName )
-				.append( File.separator )
-				.append( appName )
-				.append(".xml" ).toString()
-			)
-		);
-	}
-	
-	public String getString( String xpath, String defaultValue ) {
+	public String getStringValue( String xpath, String defaultValue ) {
 		if( !config.containsKey( xpath ) ) {
-			System.out.println( "doesn't have key " + xpath );
 			config.addProperty( xpath, defaultValue );
 		}
+		return getStringValue( xpath );
+	}
+	
+	public String getStringValue( String xpath ) {
 		return config.getString( xpath );
 	}
 	
-	public String getString( String xpath ) {
-		return getString( xpath, "" );
+	private FileBasedConfigurationBuilder<XMLConfiguration> initBuilder( File f ) {
+		Parameters parms = new Parameters();
+		FileBasedConfigurationBuilder<XMLConfiguration> builder = 
+				new FileBasedConfigurationBuilder<XMLConfiguration>( XMLConfiguration.class )
+				.configure( parms.xml()
+						.setFile( f )
+						.setExpressionEngine( new XPathExpressionEngine() )
+						
+				);
+		builder.setAutoSave( true );
+		return builder;
 	}
 	
-	public void setString( String xpath, String value ) {
+	public void setStringValue( String xpath, String value ) {
 		config.setProperty( xpath, value );
+	}
+	
+	private void validateFilePathExists( File f ) {
+		if( f.exists() )
+			return;
+		if( f.getParentFile() != null )
+			f.getParentFile().mkdirs();
+		try {
+			FileWriter fw = new FileWriter( f );
+			fw.write( "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" );
+			fw.write( System.getProperty( "line.separator" ) );
+			fw.write( "<configuration />" );
+			fw.write( System.getProperty( "line.separator" ) );
+			fw.flush();
+			fw.close();
+		}
+		catch( IOException e ) {
+			System.out.println( "Unable to write default config file.  Exiting application" );
+			e.printStackTrace();
+			System.exit( 1 );
+		}
 	}
 
 }
