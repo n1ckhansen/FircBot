@@ -5,6 +5,8 @@ import java.util.Set;
 
 import org.jibble.pircbot.User;
 
+import com.blackfez.models.geolocation.Location;
+
 public interface IChannelUserManager {
 
 	public void addChannelUser( String nic, IChannelUser user ); 
@@ -28,6 +30,8 @@ public interface IChannelUserManager {
 	public void removeUserFromChannel( String channel, IChannelUser user );
 	
 	public void removeUser( IChannelUser user );
+	
+	public void setChannelUserLocation( String nic, Location loc );
 	
 	public void setChannelUserTracker( Map<String,Set<IChannelUser>> map );
 

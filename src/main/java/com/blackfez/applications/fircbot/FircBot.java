@@ -46,6 +46,7 @@ public class FircBot extends PircBot {
 		zipWrapper = new ZipCodeApiWrapper( cm );
 		dskWrapper = new DarkSkyApiWrapper( cm, zipWrapper );
 		this.userManager = new ChannelUserManager( cm );
+		cm.setUserManager( userManager );
 		this.initCron();
 	}
 	
@@ -69,6 +70,7 @@ public class FircBot extends PircBot {
 			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300000 ) ), ((CronTask) task).getInterval() );
 		}
 	}
+
 	public void onMessage( String channel, String sender, String login, String hostname, String message ) {
 		
 		for( MessageProcessor mp : processors.get( channel ) ) {
@@ -128,7 +130,7 @@ public class FircBot extends PircBot {
 		if( channel.replaceAll( "#","" ).toLowerCase().equals("fezchat" ) ) {
 			if( sender.toLowerCase().equals( "fezboy" ) )
 				sendMessage( channel, sender + ": Welcome back, sir." );
-			else if( !sender.equalsIgnoreCase( "fircbot" ) ) {
+			else if( !sender.equalsIgnoreCase( cm.getStringValue( BOTNET_NAME_KEY ) ) ) {
 				sendMessage( channel, sender + ": s'up yo?!" );
 				boolean fezout = true;
 				for( User u : getUsers( channel ) ) {

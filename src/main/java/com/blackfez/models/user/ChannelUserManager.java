@@ -11,6 +11,7 @@ import org.jibble.pircbot.User;
 
 import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.fezcore.utilities.IO.ObjectSerializerIO;
+import com.blackfez.models.geolocation.Location;
 import com.blackfez.models.user.interfaces.IChannelUser;
 import com.blackfez.models.user.interfaces.IChannelUserManager;
 
@@ -114,11 +115,7 @@ public class ChannelUserManager implements IChannelUserManager {
 		for( User u : users ) {
 			if( !userMap.containsKey( u.getNick() ) ) {
 				ChannelUser user = new ChannelUser( u.getNick() );
-				user.setPuser( u );
 				addChannelUser( u.getNick(), user );
-			}
-			else {
-				getChannelUser( u.getNick() ).setPuser( u );
 			}
 			addUserToChannel( channel, getChannelUser( u.getNick() ) );
 		}
@@ -163,6 +160,12 @@ public class ChannelUserManager implements IChannelUserManager {
 			e.printStackTrace();
 			System.exit( 1 );
 		}
+	}
+	
+	public void setChannelUserLocation( String nic, Location loc ) {
+		userMap.get( nic ).setLocation( loc );
+		serializeUserMap();
+		serializeChannelUserTracker();
 	}
 	
 	public void setChannelUserTracker( Map<String,Set<IChannelUser>> map ) {

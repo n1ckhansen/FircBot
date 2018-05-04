@@ -10,9 +10,12 @@ import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.xpath.XPathExpressionEngine;
 
+import com.blackfez.models.user.interfaces.IChannelUserManager;
+
 public class ConfigurationManager {
 	
 	private XMLConfiguration config;
+	private IChannelUserManager userManager;
 
 	public ConfigurationManager( String configFile ) {
 		this( new File( configFile ) );
@@ -42,6 +45,10 @@ public class ConfigurationManager {
 		return config.getString( xpath );
 	}
 	
+	public IChannelUserManager getUserManager() {
+		return this.userManager;
+	}
+	
 	private FileBasedConfigurationBuilder<XMLConfiguration> initBuilder( File f ) {
 		Parameters parms = new Parameters();
 		FileBasedConfigurationBuilder<XMLConfiguration> builder = 
@@ -57,6 +64,10 @@ public class ConfigurationManager {
 	
 	public void setStringValue( String xpath, String value ) {
 		config.setProperty( xpath, value );
+	}
+	
+	public void setUserManager( IChannelUserManager um ) {
+		this.userManager = um;
 	}
 	
 	private void validateFilePathExists( File f ) {
