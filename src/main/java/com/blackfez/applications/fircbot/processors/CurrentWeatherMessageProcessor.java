@@ -11,11 +11,8 @@ import com.blackfez.models.user.interfaces.IChannelUser;
 
 public class CurrentWeatherMessageProcessor extends MessageProcessor {
 	
-	private DarkSkyApiWrapper dsw;
-
-	public CurrentWeatherMessageProcessor(FircBot bot, String channel, ConfigurationManager configManager, DarkSkyApiWrapper dskWrapper ) {
+	public CurrentWeatherMessageProcessor(FircBot bot, String channel, ConfigurationManager configManager ) {
 		super(bot, channel, configManager);
-		dsw = dskWrapper;
 	}
 
 	@Override
@@ -30,10 +27,10 @@ public class CurrentWeatherMessageProcessor extends MessageProcessor {
 				loc.setZip( matcher.group( 1 ) );	
 				System.out.println( loc.getZip() + " is loc's zip" );
 				cm.getUserManager().setChannelUserLocation( sender, loc );
-				Bot.sendMessage( Channel, dsw.retrieveCurrentWeatherForZip( cu.getLocation().getZip() ) );
+				Bot.sendMessage( Channel, cm.getDskWrapper().retrieveCurrentWeatherForZip( cu.getLocation().getZip() ) );
 			}
 			else if( null != cu.getLocation() )
-				Bot.sendMessage( Channel, dsw.retrieveCurrentWeatherForZip( cu.getLocation().getZip() ) );
+				Bot.sendMessage( Channel, cm.getDskWrapper().retrieveCurrentWeatherForZip( cu.getLocation().getZip() ) );
 			else
 				Bot.sendMessage( Channel, sender + ": try it with a zip code--wx 00000" );
 		}

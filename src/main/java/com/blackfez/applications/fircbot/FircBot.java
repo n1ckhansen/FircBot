@@ -37,14 +37,10 @@ public class FircBot extends PircBot {
 	public static String BOTNET_NAME_KEY = "botName";
 	private transient final Map<String,List<MessageProcessor>> processors = new HashMap<String,List<MessageProcessor>>();
 	private transient final Timer cron = new Timer();
-	private transient ZipCodeApiWrapper zipWrapper;
-	private transient DarkSkyApiWrapper dskWrapper;
 	
 	public FircBot() throws ClassNotFoundException, IOException, ConfigurationException {		
 		this.cm = new ConfigurationManager( CONFIG_FILE );
 		this.setName( cm.getStringValue( BOTNET_NAME_KEY, DEFAULT_BOTNAME ) );
-		zipWrapper = new ZipCodeApiWrapper( cm );
-		dskWrapper = new DarkSkyApiWrapper( cm, zipWrapper );
 		this.userManager = new ChannelUserManager( cm );
 		cm.setUserManager( userManager );
 		this.initCron();
@@ -67,7 +63,9 @@ public class FircBot extends PircBot {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300000 ) ), ((CronTask) task).getInterval() );
+			((CronTask) task ).setBot( this );
+//			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300000 ) ), ((CronTask) task).getInterval() );
+			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 10000 ) ) + 30000, ((CronTask) task).getInterval() );
 		}
 	}
 
@@ -79,12 +77,6 @@ public class FircBot extends PircBot {
 	}
 	public void onUserList( String channel, User[] users ) {
 		userManager.processOnUserList( channel, users );
-//		try {
-//			userManager.saveUserMap();
-//		} catch (IOException e) {
-//			System.out.println( "ChannelUserManager unable to serialze the user map in onUserList()");
-//			e.printStackTrace();
-//		}
 	}
 	
 	public void onJoin( String channel, String sender, String login, String hostname ) {
@@ -96,18 +88,12 @@ public class FircBot extends PircBot {
 				Constructor<?> cons;
 				//Generic processor constructor params
 				Class<?>[] genericProcessor = { FircBot.class,String.class,ConfigurationManager.class };
-				//Weather processors constructor parms
-				Class<?>[] weatherProcessor = { FircBot.class,String.class,ConfigurationManager.class, DarkSkyApiWrapper.class };
 
 				//Lets try the various constructor types we know of.  Perhaps this can be more dynamic in the future?
 				try {
 					if( null != ReflectionUtilities.GetConstructorByParameters( mp, genericProcessor ) ) {
 						cons = ReflectionUtilities.GetConstructorByParameters( mp, genericProcessor );
 						processors.get( channel ).add( (MessageProcessor)cons.newInstance( this, channel, cm ) );
-					}
-					else if( null != ReflectionUtilities.GetConstructorByParameters( mp, weatherProcessor ) ) {
-						cons = ReflectionUtilities.GetConstructorByParameters( mp, weatherProcessor );
-						processors.get( channel ).add( (MessageProcessor)cons.newInstance( this, channel, cm, dskWrapper ) );
 					}
 					else {
 						System.out.println( "No pattern defined for processor " + mp.getName() );
@@ -148,8 +134,9 @@ public class FircBot extends PircBot {
 			}
 		}
 	}
+
 	public void serializeTheStuff() throws IOException {
-		dskWrapper.serializeTheStuff();
-		zipWrapper.serializeTheStuff();
+		cm.getDskWrapper().serializeTheStuff();
+		cm.getZipWrapper().serializeTheStuff();
 	}
 }

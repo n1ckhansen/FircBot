@@ -10,18 +10,24 @@ import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.xpath.XPathExpressionEngine;
 
+import com.blackfez.apis.darksky.DarkSkyApiWrapper;
+import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
 import com.blackfez.models.user.interfaces.IChannelUserManager;
 
 public class ConfigurationManager {
 	
 	private XMLConfiguration config;
+	private DarkSkyApiWrapper dskWrapper;
+	private TwitterBank twitBank;
 	private IChannelUserManager userManager;
+	private ZipCodeApiWrapper zipWrapper;
 
-	public ConfigurationManager( String configFile ) {
+	public ConfigurationManager( String configFile ) throws ClassNotFoundException, IOException {
 		this( new File( configFile ) );
 	}
 	
-	public ConfigurationManager( File configFile ) {
+	public ConfigurationManager( File configFile ) throws ClassNotFoundException, IOException {
+		//Bootstrap config object
 		validateFilePathExists( configFile );
 		FileBasedConfigurationBuilder<XMLConfiguration> builder = initBuilder( configFile );
 		try {
@@ -32,6 +38,24 @@ public class ConfigurationManager {
 			e.printStackTrace();
 			System.exit( 1 );
 		}
+		//Create utils and other pass-arounds
+		zipWrapper = new ZipCodeApiWrapper( this );
+		dskWrapper = new DarkSkyApiWrapper( this, zipWrapper );
+		twitBank = new TwitterBank( this );
+	}
+	
+	public Boolean getBooleanValue( String xpath, Boolean defaultValue ) {
+		if( !config.containsKey( xpath ) )
+			config.addProperty(xpath, String.valueOf( defaultValue ) );
+		return config.getBoolean( xpath );
+	}
+	
+	public Boolean getBooleanValue( String xpath ) {
+		return config.getBoolean( xpath );
+	}
+	
+	public DarkSkyApiWrapper getDskWrapper() {
+		return dskWrapper;
 	}
 	
 	public String getStringValue( String xpath, String defaultValue ) {
@@ -45,8 +69,16 @@ public class ConfigurationManager {
 		return config.getString( xpath );
 	}
 	
+	public TwitterBank getTwitterBank() {
+		return twitBank;
+	}
+	
 	public IChannelUserManager getUserManager() {
 		return this.userManager;
+	}
+	
+	public ZipCodeApiWrapper getZipWrapper() {
+		return zipWrapper;
 	}
 	
 	private FileBasedConfigurationBuilder<XMLConfiguration> initBuilder( File f ) {

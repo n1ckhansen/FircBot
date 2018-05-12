@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.blackfez.fezcore.utilities.IO.ObjectSerializerIO;
+import com.blackfez.models.twitter.Tweet;
 
 import twitter4j.Status;
 
@@ -21,7 +22,7 @@ public class TwitterBank implements Serializable {
 	private transient static final String TWIT_BANK_MAP_KEY = "dataFiles/twitterBank/twitBankMap";
 	private transient static final String CHAN_FOLLOWS_MAP_KEY = "dataFiles/twitterBank/twitBankChanMap";
 	private transient ConfigurationManager cm;
-	private Map<String,Map<Long,Status>> twitBank = new HashMap<String,Map<Long,Status>>();
+	private Map<String,Set<Tweet>> twitBank = new HashMap<String,Set<Tweet>>();
 	private Map<String,Set<String>> channelFollows = new HashMap<String,Set<String>>();
 	
 	@SuppressWarnings("unchecked")
@@ -30,9 +31,9 @@ public class TwitterBank implements Serializable {
 		try {
 			File f = new File( cm.getStringValue( TWIT_BANK_MAP_KEY, "twitBankMap.xml" ) );
 			if( !f.exists() )
-				twitBank = new HashMap<String,Map<Long,Status>>();
+				twitBank = new HashMap<String,Set<Tweet>>();
 			else
-				twitBank = (Map<String,Map<Long,Status>>)ObjectSerializerIO.LoadObject( cm.getStringValue( TWIT_BANK_MAP_KEY ) );
+				twitBank = (Map<String,Set<Tweet>>)ObjectSerializerIO.LoadObject( cm.getStringValue( TWIT_BANK_MAP_KEY ) );
 			f = new File( cm.getStringValue( CHAN_FOLLOWS_MAP_KEY, "twitBankChannelFollowsMap.xml" ) );
 			if( !f.exists() ) 
 				channelFollows = new HashMap<String,Set<String>>();
@@ -47,15 +48,26 @@ public class TwitterBank implements Serializable {
 	}
 	
 	public boolean addStatus( Status status ) {
-		boolean isNew = false;
-		if( !twitBank.containsKey( status.getUser().getScreenName() ) )
-			twitBank.put( status.getUser().getScreenName(), new HashMap<Long,Status>() );
-		if( !twitBank.get( status.getUser().getScreenName() ).containsKey( status.getId() ) ) {
-			twitBank.get( status.getUser().getScreenName() ).put( status.getId(), status );
-			isNew = true;
+		Boolean addTweet = true;
+		Tweet tweet = new Tweet( status );
+		if( !twitBank.containsKey( tweet.getUserScreenName() ) ) {
+			System.out.println( "No key for " + tweet.getUserScreenName() );
+			twitBank.put( tweet.getUserScreenName(), new HashSet<Tweet>() );
+			System.out.println( "Key added for " + tweet.getUserScreenName() );
+		}
+		else {
+			for ( Tweet stored : twitBank.get( tweet.getUserScreenName() ) ) {
+				if( stored.getId() == tweet.getId() ) {
+					addTweet = false;
+					break;
+				}
+			}
+		}
+		if( addTweet ) {
+			twitBank.get( tweet.getUserScreenName() ).add( tweet );
 			serializeStuff();
 		}
-		return isNew;
+		return addTweet;
 	}
 	
 	public void addChannel( String channel ) {
@@ -113,7 +125,9 @@ public class TwitterBank implements Serializable {
 	public void serializeStuff() {
 		try {
 			ObjectSerializerIO.WriteObject( cm.getStringValue( TWIT_BANK_MAP_KEY ), twitBank );
+			System.out.println( "Serializer serialized twitbank");
 			ObjectSerializerIO.WriteObject( cm.getStringValue( CHAN_FOLLOWS_MAP_KEY ), channelFollows );
+			System.out.println( "Serializer serialized chanfollows");
 		} 
 		catch (IOException e) {
 			System.out.println( "Error encountered when serializing TwitterBank object" );
