@@ -57,7 +57,8 @@ public class TwitterBank implements Serializable {
 		}
 		else {
 			for ( Tweet stored : twitBank.get( tweet.getUserScreenName() ) ) {
-				if( stored.getId() == tweet.getId() ) {
+				if( String.valueOf( stored.getId() ).equals( String.valueOf( tweet.getId() ) ) ) {
+					System.out.println( "found id " + tweet.getId());
 					addTweet = false;
 					break;
 				}
