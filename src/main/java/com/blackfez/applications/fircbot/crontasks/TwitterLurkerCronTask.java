@@ -1,8 +1,6 @@
 package com.blackfez.applications.fircbot.crontasks;
 
 import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
-import com.blackfez.applications.fircbot.utilities.TwitterBank;
-import com.blackfez.models.twitter.Tweet;
 
 import twitter4j.ResponseList;
 import twitter4j.Status;
@@ -29,7 +27,7 @@ public class TwitterLurkerCronTask extends CronTask {
 
 	public TwitterLurkerCronTask( ConfigurationManager configManager ) {
 		super( configManager );
-		INTERVAL = 60000L;
+		INTERVAL = 300000L;
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.setDebugEnabled( cm.getBooleanValue( TWIT_DEBUG_KEY, TWIT_DEBUG_DEFAULT ) )
 		  .setOAuthConsumerKey( cm.getStringValue( TWIT_OAUTH_CKEY_KEY, TWIT_OACK_DEFAULT ) )

@@ -3,7 +3,6 @@ package com.blackfez.applications.fircbot.processors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.blackfez.apis.darksky.DarkSkyApiWrapper;
 import com.blackfez.applications.fircbot.FircBot;
 import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.models.geolocation.Location;
@@ -18,14 +17,12 @@ public class CurrentWeatherMessageProcessor extends MessageProcessor {
 	@Override
 	public void processMessage(String sender, String login, String hostname, String message) {
 		if( message.startsWith( "wx" ) ) {
-			System.out.println( "processing wx message");
 			IChannelUser cu = cm.getUserManager().getUserMap().get( sender );
 			Pattern zipPattern = Pattern.compile( "(\\d{5})" );
 			Matcher matcher = zipPattern.matcher( message );
 			if( matcher.find() ) {
 				Location loc = new Location();
 				loc.setZip( matcher.group( 1 ) );	
-				System.out.println( loc.getZip() + " is loc's zip" );
 				cm.getUserManager().setChannelUserLocation( sender, loc );
 				Bot.sendMessage( Channel, cm.getDskWrapper().retrieveCurrentWeatherForZip( cu.getLocation().getZip() ) );
 			}

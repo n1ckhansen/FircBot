@@ -2,8 +2,6 @@ package com.blackfez.apis.zipcodeapi;
 
 import java.io.IOException;
 
-import org.apache.commons.configuration2.ex.ConfigurationException;
-
 import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 
 public class ZipCodeApiWrapperClient {

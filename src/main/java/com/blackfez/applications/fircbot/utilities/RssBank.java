@@ -3,7 +3,6 @@ package com.blackfez.applications.fircbot.utilities;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 import com.blackfez.fezcore.utilities.IO.ObjectSerializerIO;
+import com.blackfez.models.rss.Entry;
+import com.blackfez.models.rss.Feed;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
@@ -23,33 +24,26 @@ public class RssBank implements Serializable {
 	 * 
 	 */
 	private transient static final long serialVersionUID = 1L;
-	private transient static final String CHANNEL_SUBS_KEY = "dataFiles/RSSBank/channelSubs";
 	private transient static final String ENTRIES_KEY = "dataFiles/RSSBank/entries";
 	private transient static final String FEED_MAP_KEY = "dataFiles/RSSBank/urlFeedMap";
-	private Map<URL,Set<String>> channelSubs;
-	private Map<URL,Set<SyndEntry>> entries;
-	private Map<URL,SyndFeed> urlFeedMap;
+	private Map<Feed,Set<Entry>> entries;
+	private Map<String,Feed> urlFeedMap;
 	private transient ConfigurationManager cm;
 	
 	@SuppressWarnings("unchecked")
 	public RssBank( ConfigurationManager configManager ) {
 		cm = configManager;
 		try {
-			File f = new File( cm.getStringValue( CHANNEL_SUBS_KEY, "rssBankChannelSubs.xml" ) );
+			File f = new File( cm.getStringValue( ENTRIES_KEY, "rssBankEntries.xml" ) );
 			if( !f.exists() ) 
-				channelSubs = new HashMap<URL,Set<String>>();
+				entries = new HashMap<Feed,Set<Entry>>();
 			else 
-				channelSubs = (Map<URL,Set<String>>)ObjectSerializerIO.LoadObject( cm.getStringValue( CHANNEL_SUBS_KEY ) );
-			f = new File( cm.getStringValue( ENTRIES_KEY, "rssBankEntries.xml" ) );
-			if( !f.exists() ) 
-				entries = new HashMap<URL,Set<SyndEntry>>();
-			else 
-				entries = (Map<URL,Set<SyndEntry>>)ObjectSerializerIO.LoadObject( cm.getStringValue( ENTRIES_KEY ) );
+				entries = (Map<Feed,Set<Entry>>)ObjectSerializerIO.LoadObject( cm.getStringValue( ENTRIES_KEY ) );
 			f = new File( cm.getStringValue( FEED_MAP_KEY, "rssBankFeedMap.xml" ) );
 			if( !f.exists() )
-				urlFeedMap = new HashMap<URL,SyndFeed>();
+				urlFeedMap = new HashMap<String,Feed>();
 			else
-				urlFeedMap = (Map<URL,SyndFeed>)ObjectSerializerIO.LoadObject( cm.getStringValue( FEED_MAP_KEY ) );
+				urlFeedMap = (Map<String,Feed>)ObjectSerializerIO.LoadObject( cm.getStringValue( FEED_MAP_KEY ) );
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -60,120 +54,117 @@ public class RssBank implements Serializable {
 		serializeStuff();
 	}
 	
-	private SyndFeed getFeedFromUrl( URL url ) {
-		SyndFeedInput input = new SyndFeedInput();
-		SyndFeed feed = null;
-		try {
-			feed = input.build( new XmlReader( url ) );
-		} 
-		catch (IllegalArgumentException | FeedException | IOException e) {
-			System.out.println( "Unable to load feed at " + url.toString() );
-			e.printStackTrace();
-			System.out.println( "Continuing...." );
-		}
-		urlFeedMap.put(url, feed);
-		return feed;
+	public void addChannelWatcherForFeed( String channel, String feedUrl ) {
+		getSyndFeedFromUrl( feedUrl );
+		urlFeedMap.get( feedUrl ).addChannelFollowing( channel );
+		serializeUrlFeedMap();
 	}
 	
-	public Set<String> getChannelSubsForUrl( URL url ) {
-		return channelSubs.get( url );
+	public Set<String> getChannelsForFeed( String url ) {
+		return urlFeedMap.get( url ).getChannelsFollowing();
 	}
 	
-	public Map<URL,Set<String>> getChannelSubs() {
-		return channelSubs;
+	public Map<Feed,Set<Entry>> getEntries() {
+		return this.entries;
 	}
 	
-	public SyndFeed getFeedForUrl( URL url ) {
+	public Feed getFeedForUrl( String url ) {
 		return urlFeedMap.get( url );
 	}
 	
-	public void addChannelWatcherForFeed( String channel, String feedUrl ) {
-		URL url = null;
+	public Set<String> getFeedUrls() {
+		System.out.println( "returning a set of " + urlFeedMap.keySet().size() );
+		return urlFeedMap.keySet();
+	}
+
+	private SyndFeed getSyndFeedFromUrl( String url ) {
+		SyndFeedInput input = new SyndFeedInput();
+		SyndFeed feed = null;
 		try {
-			url = new URL( feedUrl );
+			feed = input.build( new XmlReader( new URL( url ) ) );
 		} 
-		catch (MalformedURLException e) {
-			System.out.println( "Unable to convert '" + feedUrl + "' to URL object" );
+		catch (IllegalArgumentException | FeedException | IOException e) {
+			System.out.println( "Unable to load feed at " + url );
 			e.printStackTrace();
-			return;
+			System.out.println( "Continuing...." );
 		}
-		if( !channelSubs.containsKey( url ) )
-			channelSubs.put( url, new HashSet<String>() );
-		channelSubs.get( url ).add( channel );
-		urlFeedMap.put( url, getFeedFromUrl( url ) );
-		serializeStuff();
+		if( !urlFeedMap.containsKey( url ) ) {
+			urlFeedMap.put(url, new Feed( feed ) );
+			serializeUrlFeedMap();
+		}
+		return feed;
 	}
 	
-	public void refreshFeed( URL url ) {
-		getFeedFromUrl( url );
+	public Map<String,Feed> getUrlFeedMap() {
+		return this.urlFeedMap;
+	}
+	
+	public Set<Entry> parseForNewEntries( String url ) {
+		Set<Entry> newEntries = new HashSet<Entry>();
+		Feed ourFeed = getFeedForUrl( url );
+		SyndFeed sf = getSyndFeedFromUrl( url );
+		if( null == entries.get( ourFeed ) )
+			entries.put( ourFeed, new HashSet<Entry>() );
+		for( SyndEntry sEntry : sf.getEntries() ) {
+			Boolean isNewEntry = true;
+			for( Entry entry : entries.get( ourFeed ) ) {
+				if( sEntry.getUri().equals( entry.getUri() ) ) {
+					isNewEntry = false;
+					break;
+				}
+			}
+			if( isNewEntry ) {
+				Entry entry = new Entry( sEntry );
+				entries.get( ourFeed ).add( entry );
+				newEntries.add( entry );
+				serializeEntries();
+			}
+		}
+		return newEntries;
+	}
+	
+	public void refreshFeed( String url ) {
+		getSyndFeedFromUrl( url );
 	}
 	
 	public void removeChannelWatcherForFeed( String channel, String feedUrl ) {
-		URL url = null;
-		try {
-			url = new URL( feedUrl );
-		}
-		catch( MalformedURLException e ) {
-			System.out.println( "Unable to convert '" + feedUrl + "' to URL object" );
-			e.printStackTrace();
-			return;
-		}
-		if( !channelSubs.containsKey( url ) )
-			return;
-		if( channelSubs.get( url ).contains( channel ) )
-			channelSubs.get ( url ).remove( channel );
-		serializeStuff();
+		urlFeedMap.get( feedUrl ).removeChannelFollowing( channel );
+		serializeUrlFeedMap();
 	}
 	
-	
-	public void serializeStuff() {
+	public void serializeEntries() {
 		try {
-			ObjectSerializerIO.WriteObject( cm.getStringValue(CHANNEL_SUBS_KEY), channelSubs );
 			ObjectSerializerIO.WriteObject( cm.getStringValue(ENTRIES_KEY), entries );
-			ObjectSerializerIO.WriteObject( cm.getStringValue(FEED_MAP_KEY), urlFeedMap );
 		} 
 		catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void serializeStuff() {
+		System.out.println( "Serializing feed entries" );
+		serializeEntries();
+		System.out.println( "Serializing url to feed map" );
+		serializeUrlFeedMap();
+	}
+
+	public void serializeUrlFeedMap() {
+		try {
+			ObjectSerializerIO.WriteObject( cm.getStringValue(FEED_MAP_KEY), urlFeedMap );
+		}
+		catch( IOException e ) {
 			System.out.println( "Error encountered when serializing RssBank object[s]" );
 			e.printStackTrace();
 			System.out.println( "Continuing.... " );
 		}
 	}
-
-	public Set<URL> getFeedUrls() {
-		return urlFeedMap.keySet();
-	}
-
-	public Set<SyndEntry> parseForNewEntries(URL url) {
-		Set<SyndEntry> newEntries = new HashSet<SyndEntry>();
-		if( null == entries.get( url ) )
-			entries.put( url, new HashSet<SyndEntry>() );
-		for( SyndEntry entry : urlFeedMap.get( url ).getEntries() ) {
-			if( entries.get( url ).contains( entry ) )
-				continue;
-			newEntries.add( entry );
-			entries.get( url ).add( entry );
-		}
-		serializeStuff();
-		return newEntries;
-	}
 	
-	public void setChannelSubs( Map<URL,Set<String>> subs ) {
-		this.channelSubs = subs;
-	}
-	
-	public Map<URL,Set<SyndEntry>> getEntries() {
-		return this.entries;
-	}
-	
-	public void setEntries( Map<URL,Set<SyndEntry>> map ) {
+	public void setEntries( Map<Feed,Set<Entry>> map ) {
 		this.entries = map;
 	}
 	
-	public Map<URL,SyndFeed> getUrlFeedMap() {
-		return this.urlFeedMap;
-	}
-	
-	public void setUrlFeedMap( Map<URL,SyndFeed> map ) {
+	public void setUrlFeedMap( Map<String,Feed> map ) {
 		this.urlFeedMap = map;
 	}
 

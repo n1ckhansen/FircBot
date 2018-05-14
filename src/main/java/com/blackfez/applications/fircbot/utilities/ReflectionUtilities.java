@@ -3,6 +3,7 @@ package com.blackfez.applications.fircbot.utilities;
 import java.lang.reflect.Constructor;
 
 public class ReflectionUtilities {
+	@SuppressWarnings("rawtypes")
 	public static Constructor<?> GetConstructorByParameters( Class<?> clazz, Class[] parms ) {
 		Constructor<?>[] constructors = clazz.getConstructors();
 		for( Constructor<?> cons : constructors ) {

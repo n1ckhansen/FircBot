@@ -1,12 +1,11 @@
 package com.blackfez.applications.fircbot.crontasks;
 
-import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.applications.fircbot.utilities.RssBank;
-import com.rometools.rome.feed.synd.SyndEntry;
+import com.blackfez.models.rss.Entry;
 
 public class RssCronTask extends CronTask {
 	
@@ -26,12 +25,14 @@ public class RssCronTask extends CronTask {
 	@Override
 	public void run() {
 		System.out.println( "Running RssCron" );
-		Set<SyndEntry> newEntries;
-		for( URL url : rssbank.getFeedUrls() ) {
+		Set<Entry> newEntries;
+		for( String url : rssbank.getFeedUrls() ) {
+			System.out.println( "Processing " + url );
 			rssbank.refreshFeed( url );
 			newEntries = rssbank.parseForNewEntries( url );
-			for( String channel : rssbank.getChannelSubsForUrl( url ) ) {
-				for( SyndEntry entry : newEntries ) {
+			System.out.println( "We have " + newEntries.size() + " new entries" );
+			for( String channel : rssbank.getChannelsForFeed( url ) ) {
+				for( Entry entry : newEntries ) {
 					StringBuffer sb = new StringBuffer();
 					sb.append( "New entry by " );
 					sb.append( entry.getAuthor() );
@@ -41,7 +42,8 @@ public class RssCronTask extends CronTask {
 					sb.append( entry.getTitle() );
 					Bot.sendMessage( channel, sb.toString() );
 					try {
-						TimeUnit.SECONDS.sleep( 15L );
+						TimeUnit.SECONDS.sleep( 15L );				
+
 					} 
 					catch (InterruptedException e) {
 						// TODO Auto-generated catch block

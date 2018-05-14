@@ -51,14 +51,11 @@ public class TwitterBank implements Serializable {
 		Boolean addTweet = true;
 		Tweet tweet = new Tweet( status );
 		if( !twitBank.containsKey( tweet.getUserScreenName() ) ) {
-			System.out.println( "No key for " + tweet.getUserScreenName() );
 			twitBank.put( tweet.getUserScreenName(), new HashSet<Tweet>() );
-			System.out.println( "Key added for " + tweet.getUserScreenName() );
 		}
 		else {
 			for ( Tweet stored : twitBank.get( tweet.getUserScreenName() ) ) {
 				if( String.valueOf( stored.getId() ).equals( String.valueOf( tweet.getId() ) ) ) {
-					System.out.println( "found id " + tweet.getId());
 					addTweet = false;
 					break;
 				}
@@ -126,9 +123,7 @@ public class TwitterBank implements Serializable {
 	public void serializeStuff() {
 		try {
 			ObjectSerializerIO.WriteObject( cm.getStringValue( TWIT_BANK_MAP_KEY ), twitBank );
-			System.out.println( "Serializer serialized twitbank");
 			ObjectSerializerIO.WriteObject( cm.getStringValue( CHAN_FOLLOWS_MAP_KEY ), channelFollows );
-			System.out.println( "Serializer serialized chanfollows");
 		} 
 		catch (IOException e) {
 			System.out.println( "Error encountered when serializing TwitterBank object" );

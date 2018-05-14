@@ -11,14 +11,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.jibble.pircbot.PircBot;
 import org.jibble.pircbot.User;
 import org.reflections.Reflections;
 
-import com.blackfez.apis.darksky.DarkSkyApiWrapper;
-import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
 import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 import com.blackfez.applications.fircbot.utilities.ReflectionUtilities;
 import com.blackfez.applications.fircbot.crontasks.CronTask;
@@ -35,6 +34,7 @@ public class FircBot extends PircBot {
 	private transient final String CONFIG_FILE = System.getProperty( "user.home" ) + File.separator + ".fezconfig" + File.separator + "fircbot" + File.separator + "FircBot.xml";
 	private static String DEFAULT_BOTNAME = "fircbot";
 	public static String BOTNET_NAME_KEY = "botName";
+	public static String CHANNELS_KEY = "joinChannels/channel";
 	private transient final Map<String,List<MessageProcessor>> processors = new HashMap<String,List<MessageProcessor>>();
 	private transient final Timer cron = new Timer();
 	
@@ -46,6 +46,10 @@ public class FircBot extends PircBot {
 		this.initCron();
 	}
 	
+	public List<String> getChannelsToJoin() {
+		return cm.getStringList( CHANNELS_KEY );
+	}
+	
 	public Map<String,IChannelUser> getChanUsers() {
 		return userManager.getUserMap();
 	}
@@ -54,7 +58,6 @@ public class FircBot extends PircBot {
 		Reflections reflections = new Reflections( "com.blackfez.applications.fircbot.crontasks" );
 		Set<Class<? extends CronTask>> cts = reflections.getSubTypesOf( CronTask.class );
 		for( Class<? extends CronTask> ct : cts ) {
-			System.out.println( ct.getSimpleName() );
 			 Object task = null;
 			try {
 				Constructor<? extends CronTask> constructor = ct.getConstructor(ConfigurationManager.class);
@@ -64,8 +67,8 @@ public class FircBot extends PircBot {
 				e.printStackTrace();
 			}
 			((CronTask) task ).setBot( this );
-//			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 300000 ) ), ((CronTask) task).getInterval() );
-			cron.scheduleAtFixedRate( (TimerTask) task, Math.round( (Math.random() * 10000 ) ) + 30000, ((CronTask) task).getInterval() );
+//			cron.scheduleAtFixedRate( (TimerTask) task, ThreadLocalRandom.current().nextInt(30000, 300000 ), ((CronTask) task).getInterval() );
+			cron.scheduleAtFixedRate( (TimerTask) task, ThreadLocalRandom.current().nextInt(20000, 40000 ), ((CronTask) task).getInterval() );
 		}
 	}
 
@@ -108,7 +111,6 @@ public class FircBot extends PircBot {
 				}
 			}
 		}
-		System.out.println( processors.get( channel ) );
 		this.onUserList( channel, this.getUsers( channel ) );
 		
 		System.out.println( channel.replaceAll( "#", "" ).toLowerCase() );

@@ -26,9 +26,7 @@ public class Tweet implements Serializable {
 	
 	public Tweet( Status status ) {
 		setCreatedAt( status.getCreatedAt() );
-		System.out.println( "status id is '" + status.getId() + "'" );
 		setId( status.getId() );
-		System.out.println( "tweet id is '" + getId() + "'" );
 		setText( status.getText() );
 		setTruncated( status.isTruncated() );
 		setUserName( status.getUser().getName() );

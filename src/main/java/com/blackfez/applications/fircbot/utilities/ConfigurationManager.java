@@ -3,6 +3,8 @@ package com.blackfez.applications.fircbot.utilities;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
@@ -56,6 +58,15 @@ public class ConfigurationManager {
 	
 	public DarkSkyApiWrapper getDskWrapper() {
 		return dskWrapper;
+	}
+	
+	public List<String> getStringList( String xpath ) {
+		ArrayList<String> list = new ArrayList<String>();
+		for( Object o : config.getList( xpath ) ) {
+			list.add( (String) o );
+		}
+		return list;
+		
 	}
 	
 	public String getStringValue( String xpath, String defaultValue ) {
