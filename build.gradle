@@ -14,14 +14,23 @@ buildscript {
 
 plugins {
     id "com.jfrog.bintray" version "1.7"
-    id 'org.ajoberstar.grgit' version '2.1.1'
     id "com.adarshr.test-logger" version "1.2.0"
 }
 
 group = "com.blackfez"
 version = "0.1"
+def currentBranch = '' 
 
-def currentBranch = grgit.branch.current().getName()
+def sbout = new StringBuilder()
+def sberr = new StringBuilder()
+def process = "git branch".execute()
+process.consumeProcessOutput( sbout, sberr )
+process.waitForOrKill( 1000 )
+sbout.eachLine {
+    if( it.trim().startsWith( '*' ) )
+        currentBranch = it.trim().split( ' ' )[ 1 ]
+}
+
 def buildnumber = "LOCAL"
 def wart = ""
 
