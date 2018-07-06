@@ -85,8 +85,9 @@ public class RssBank implements Serializable {
 		} 
 		catch (IllegalArgumentException | FeedException | IOException e) {
 			System.out.println( "Unable to load feed at " + url );
-			e.printStackTrace();
+			//e.printStackTrace();
 			System.out.println( "Continuing...." );
+            return null;
 		}
 		if( !urlFeedMap.containsKey( url ) ) {
 			urlFeedMap.put(url, new Feed( feed ) );
@@ -103,6 +104,10 @@ public class RssBank implements Serializable {
 		Set<Entry> newEntries = new HashSet<Entry>();
 		Feed ourFeed = getFeedForUrl( url );
 		SyndFeed sf = getSyndFeedFromUrl( url );
+        if( null == sf ) {
+            System.out.println( "Skipping " + url + " because unable to parse url" );
+            return newEntries;
+        }
 		if( null == entries.get( ourFeed ) )
 			entries.put( ourFeed, new HashSet<Entry>() );
 		for( SyndEntry sEntry : sf.getEntries() ) {
