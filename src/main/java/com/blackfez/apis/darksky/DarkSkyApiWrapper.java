@@ -9,7 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.blackfez.apis.zipcodeapi.ZipCodeApiWrapper;
-import com.blackfez.applications.fircbot.utilities.IOUtils;
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
+import com.blackfez.fezcore.utilities.IO.ObjectSerializerIO;
+import com.blackfez.fezcore.utilities.IO.URLUtils;
 import com.blackfez.models.geolocation.Location;
 import com.blackfez.models.weather.Forecast;
 
@@ -17,41 +19,31 @@ import com.blackfez.models.weather.Forecast;
 public class DarkSkyApiWrapper implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	private transient static final String DSKFILE = "dskForecasts.ser";
-	private transient final String DSKEY = "37a15c6db486688f88dff78d57d2edb4";
 	private transient final String DSURL = "https://api.darksky.net/forecast/";
-	private transient static DarkSkyApiWrapper INSTANCE = null;
-	
+	private transient final String DSKEY_KEY = "darkSkyWrapper/darkSkyKey";
+	private transient final String DSCACHE_KEY = "darkSkyWrapper/cacheFile";
+	private transient ZipCodeApiWrapper zipWrap;
+	private transient ConfigurationManager cm;
+	private transient String DSKEY;
+		
 	private Map<Location,Forecast> CACHE;
 
-	private DarkSkyApiWrapper() {}
-	
-	public static DarkSkyApiWrapper getInstance() {
-		if( null != INSTANCE ) 
-			return INSTANCE;
-		synchronized( DarkSkyApiWrapper.class ) {
-			if( null != INSTANCE )
-				return INSTANCE;
-			File f = new File( DSKFILE );
-			if( f.exists() ) {
-				try {
-					INSTANCE = (DarkSkyApiWrapper) IOUtils.LoadObject( DSKFILE );
-				}
-				catch( IOException | ClassNotFoundException e ) {
-					INSTANCE = new DarkSkyApiWrapper();
-					return INSTANCE;
-				}
-			}
-			else {
-				INSTANCE = new DarkSkyApiWrapper();
-
-			}
-			return INSTANCE;
+	@SuppressWarnings("unchecked")
+	public DarkSkyApiWrapper( ConfigurationManager configManager, ZipCodeApiWrapper zcw ) throws ClassNotFoundException, IOException {
+		cm = configManager;
+		zipWrap = zcw;
+		DSKEY = cm.getStringValue( DSKEY_KEY, "37a15c6db486688f88dff78d57d2edb4" );
+		File f = new File( cm.getStringValue( DSCACHE_KEY, "dskWrapperCache.xml" ) );
+		if( !f.exists() ) {
+			CACHE = new HashMap<Location,Forecast>();
+			serializeTheStuff();
 		}
+		else
+			CACHE = (Map<Location,Forecast>)ObjectSerializerIO.LoadObject( cm.getStringValue( DSCACHE_KEY ) );
 	}
 	
 	public Forecast getForcastForZip( String zip ) {
-		Location loc = ZipCodeApiWrapper.getInstance().getLocation(zip);
+		Location loc = zipWrap.getLocation(zip);
 		Forecast forecast = this.getForcastForCoords( loc );
 		return forecast;
 	}
@@ -88,7 +80,7 @@ public class DarkSkyApiWrapper implements Serializable {
 		Forecast f = new Forecast();
 		try {
 			URL url = new URL( String.format("%s%s/%s,%s", DSURL,DSKEY,loc.getLatitude(), loc.getLongitude() ) );
-			f.setJsonForecast( IOUtils.GetUrlResult( url ) );
+			f.setJsonForecast( URLUtils.GetUrlResult( url ) );
 			this.CACHE.put( loc, f );
 			this.serializeTheStuff();
 		} 
@@ -104,7 +96,7 @@ public class DarkSkyApiWrapper implements Serializable {
 	}
 	
 	public String retrieveCurrentWeatherForZip( String zip ) {
-		Location loc = ZipCodeApiWrapper.getInstance().getLocation( zip );
+		Location loc = zipWrap.getLocation( zip );
 		Forecast f = this.getForcastForCoords( loc );
 		StringBuilder blurb = new StringBuilder();
 		blurb.append( String.format( "%s, %s %s: ", loc.getCity(), loc.getState(), loc.getZip() ) );
@@ -119,7 +111,7 @@ public class DarkSkyApiWrapper implements Serializable {
 	}
 	
 	public String retrieveWeatherForecastForZip( String zip ) {
-		Location loc = ZipCodeApiWrapper.getInstance().getLocation( zip );
+		Location loc = zipWrap.getLocation( zip );
 		Forecast f = this.getForcastForCoords( loc );
 		StringBuilder blurb = new StringBuilder();
 		blurb.append( String.format( "%s, %s %s: ", loc.getCity(), loc.getState(), loc.getZip() ) );
@@ -134,7 +126,7 @@ public class DarkSkyApiWrapper implements Serializable {
 	}
 	
 	public void serializeTheStuff() throws IOException {
-		IOUtils.WriteObject( DSKFILE, this );
+		ObjectSerializerIO.WriteObject( cm.getStringValue( DSCACHE_KEY ), CACHE );
 	}
 	
 }

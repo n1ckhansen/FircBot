@@ -12,7 +12,17 @@ pipeline {
         sh './gradlew check'
         sh './gradlew buildEnvironment'
         sh './gradlew properties'
+        sh './gradlew test'
         sh './gradlew assembleDist'
+        publishHTML ( target: [
+          allowMissing: true, 
+          alwaysLinkToLastBuild: true, 
+          keepAll: false, 
+          reportDir: 'build/reports/tests/test', 
+          reportFiles: 'index.html', 
+          reportName: 'Latest Tests Report', 
+          reportTitles: ''
+        ])
       }
     }
     stage( 'Stage' ) {
@@ -22,6 +32,11 @@ pipeline {
         steps {
             sh './gradlew bintrayUpload'
         }
+    }
+  }
+  post {
+    always {
+      junit 'build/test-results/**/*.xml'
     }
   }
 }

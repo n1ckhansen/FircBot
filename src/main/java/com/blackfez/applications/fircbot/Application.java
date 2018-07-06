@@ -28,12 +28,12 @@ public class Application {
 		try {
 			bot.connect( "irc.freenode.net" );
 		} 
-		// TODO: break these out and handle more gracefully 
 		catch (IOException | IrcException e) {
 			e.printStackTrace();
 			throw e;
 		}
-		bot.joinChannel( "#fezchat" );
-		bot.joinChannel( "#pircbot" );
+		for( String ch : bot.getChannelsToJoin() ) {
+			bot.joinChannel( ch );
+		}
 	}
 }

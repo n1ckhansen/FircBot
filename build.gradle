@@ -14,13 +14,23 @@ buildscript {
 
 plugins {
     id "com.jfrog.bintray" version "1.7"
-    id 'org.ajoberstar.grgit' version '2.1.1'
+    id "com.adarshr.test-logger" version "1.2.0"
 }
 
 group = "com.blackfez"
 version = "0.1"
+def currentBranch = '' 
 
-def currentBranch = grgit.branch.current().getName()
+def sbout = new StringBuilder()
+def sberr = new StringBuilder()
+def process = "git branch".execute()
+process.consumeProcessOutput( sbout, sberr )
+process.waitForOrKill( 1000 )
+sbout.eachLine {
+    if( it.trim().startsWith( '*' ) )
+        currentBranch = it.trim().split( ' ' )[ 1 ]
+}
+
 def buildnumber = "LOCAL"
 def wart = ""
 
@@ -48,6 +58,7 @@ allprojects {
     apply plugin: 'com.jfrog.bintray'
     apply plugin: 'java'
     apply plugin: 'maven-publish'
+    apply plugin: 'com.adarshr.test-logger'
 }
 
 // Apply the java-library plugin to add support for Java Library
@@ -78,6 +89,7 @@ dependencies {
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-core:2.18.0'
     
     compile 'com.google.code.gson:gson:2.8.2'
     compile 'com.google.guava:guava:21.0'
@@ -91,7 +103,10 @@ dependencies {
     compile 'org.reflections:reflections:0.9.11' 
     compile 'org.twitter4j:twitter4j-core:4.+'
     compile 'com.rometools:rome:1.9.0'
-    compile 'com.blackfez:FezCore:0.1.18'
+    compile 'com.blackfez:FezCore:0.1.23'
+    compile 'org.apache.commons:commons-configuration2:2.+'
+    compile 'commons-beanutils:commons-beanutils:1.9.+'
+    compile 'commons-jxpath:commons-jxpath:1.+'
 }
 
 task sourcesJar( type: Jar, dependsOn: classes) {
@@ -103,6 +118,10 @@ javadoc.failOnError = false
 task javadocJar( type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
+}
+
+test {
+    testLogging.showStandardStreams = true
 }
 
 artifacts {

@@ -4,13 +4,14 @@ import java.rmi.NoSuchObjectException;
 import java.util.Map;
 
 import com.blackfez.models.geolocation.Location;
+import com.blackfez.models.user.interfaces.IChannelUser;
 
 public class UserUtils {
 	
-	public static ChannelUser UpdateUserLocation( String sender, String msg, Map<String,ChannelUser> chanUsers) throws NoSuchObjectException {
+	public static IChannelUser UpdateUserLocation( String sender, String msg, Map<String,IChannelUser> chanUsers) throws NoSuchObjectException {
 		String[] tokens =  msg.split( " " );
 		if( chanUsers.containsKey( sender ) ) {
-			ChannelUser cu = chanUsers.get( sender );
+			IChannelUser cu = chanUsers.get( sender );
 			if( tokens.length >= 2 ) {
 				Location loc = new Location();
 				loc.setZip( tokens[ 1 ] );

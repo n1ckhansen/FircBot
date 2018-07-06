@@ -1,16 +1,25 @@
 package com.blackfez.apis.zipcodeapi;
 
+import java.io.IOException;
+
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
+
 public class ZipCodeApiWrapperClient {
 
 	public static void main(String[] args) {
-		ZipCodeApiWrapper client = ZipCodeApiWrapper.getInstance();
-		System.out.println( "client is " + client.toString() );
-		System.out.println( "lat is '" + client.getLatitude("51503") + "'" );
-		System.out.println( "lng is '" + client.getLongitude("51503") + "'" );
-		client = ZipCodeApiWrapper.getInstance();
-		System.out.println( "client is " + client.toString() );
-		System.out.println( "lat is '" + client.getLatitude("51503") + "'" );
-		System.out.println( "lng is '" + client.getLongitude("51503") + "'" );
+		ZipCodeApiWrapper zipwrap;
+		try {
+			zipwrap = new ZipCodeApiWrapper( new ConfigurationManager( "zipWrapTest.xml" ) );
+			System.out.println( "zipwrap is " + zipwrap.toString() );
+			System.out.println( "lat is '" + zipwrap.getLatitude("51503") + "'" );
+			System.out.println( "lng is '" + zipwrap.getLongitude("51503") + "'" );
+			System.out.println( "zipwrap is " + zipwrap.toString() );
+			System.out.println( "lat is '" + zipwrap.getLatitude("51503") + "'" );
+			System.out.println( "lng is '" + zipwrap.getLongitude("51503") + "'" );
+		} catch (ClassNotFoundException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }

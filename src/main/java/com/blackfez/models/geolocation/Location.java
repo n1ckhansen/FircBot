@@ -19,27 +19,23 @@ public class Location implements Serializable {
 	public Location() {}
 	
 	public String getCity() {
-		this.checkResults();
-		return this.CITY.replaceAll("\"", "" );
+		return Strings.isNullOrEmpty( this.CITY ) ? "" : this.CITY;
 	}
 
 	public String getLatitude() {
-		this.checkResults();
-		return this.LATITUDE.replaceAll("\"", "" );
+		return Strings.isNullOrEmpty( this.LATITUDE ) ? "" : this.LATITUDE.replaceAll("\"", "" );
 	}
 	
 	public String getLongitude() {
-		this.checkResults();
-		return this.LONGITUDE.replaceAll("\"", "" );
+		return Strings.isNullOrEmpty( this.LONGITUDE ) ? "" : this.LONGITUDE.replaceAll("\"", "" );
 	}
 	
 	public String getState() {
-		this.checkResults();
-		return this.STATE.replaceAll("\"", "" );
+		return Strings.isNullOrEmpty( this.STATE ) ? "" : this.STATE.replaceAll("\"", "" );
 	}
 	
 	public String getZip() {
-		return this.ZIP.replaceAll("\"", "" );
+		return Strings.isNullOrEmpty( this.ZIP ) ? "" : this.ZIP.replaceAll("\"", "" );
 	}
 	
 	public boolean isZipSet() {
@@ -64,11 +60,5 @@ public class Location implements Serializable {
 	
 	public void setZip( String zip ) {
 		this.ZIP = zip;
-	}
-	
-	private void checkResults() {
-		if( Strings.isNullOrEmpty(this.ZIP ) ) {
-			throw new NullPointerException( "Attempting to find location of ZIP that is not set." );
-		}
 	}
 }

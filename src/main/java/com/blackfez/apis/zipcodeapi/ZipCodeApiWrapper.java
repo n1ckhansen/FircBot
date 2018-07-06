@@ -8,46 +8,37 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.JsonObject;
-
-import com.blackfez.applications.fircbot.utilities.IOUtils;
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
+import com.blackfez.fezcore.utilities.IO.ObjectSerializerIO;
+import com.blackfez.fezcore.utilities.IO.URLUtils;
 import com.blackfez.models.geolocation.*;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public final class ZipCodeApiWrapper implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
-	public transient static final String ZCWFILE = "zipCache.ser";
-	private transient final String API = "WtH14qwX8hJ75fsnRKjiZRCZVNvPNwJR8RvqPvDBVNebRN9QctOFS5RJQtjwCtHB";
+	private transient final String LOOKUPS_KEY = "zipWrapper/lookupCacheFile";
+	private transient final String API_KEY = "zipWrapper/apiKey";
+	private transient ConfigurationManager cm;
+	private transient String API;
 	private transient final String URI = "https://www.zipcodeapi.com/rest/";
 	private transient final String INFO = "/info.json/";
 	private transient final String UNITS = "/degrees";
-	private transient static ZipCodeApiWrapper INSTANCE = null;
 	
-	private Map<String,Location> LOOKUPS = new HashMap<String,Location>();
+	private Map<String,Location> LOOKUPS;
 
-	private ZipCodeApiWrapper() {}
-	
-	public static ZipCodeApiWrapper getInstance() {
-		if( null != INSTANCE ) {
-			return INSTANCE;
+	@SuppressWarnings("unchecked")
+	public ZipCodeApiWrapper( ConfigurationManager configManager ) throws ClassNotFoundException, IOException {
+		cm = configManager;
+		API = cm.getStringValue( API_KEY, "WtH14qwX8hJ75fsnRKjiZRCZVNvPNwJR8RvqPvDBVNebRN9QctOFS5RJQtjwCtHB" );
+		File f = new File( cm.getStringValue( LOOKUPS_KEY, "zipCodeCache.xml" ) );
+		if( !f.exists() ) {
+			LOOKUPS = new HashMap<String,Location>();
+			serializeTheStuff();
 		}
-		synchronized( ZipCodeApiWrapper.class ) {
-			if( null != INSTANCE )
-				return INSTANCE;
-			File f = new File( ZCWFILE );
-			if( !f.exists() ) {
-				INSTANCE = new ZipCodeApiWrapper();
-				return INSTANCE;
-			}
-			try {
-				INSTANCE = (ZipCodeApiWrapper) IOUtils.LoadObject( ZCWFILE );
-			}
-			catch( IOException | ClassNotFoundException e ) {
-				INSTANCE = new ZipCodeApiWrapper();
-			}
-			return INSTANCE;
-		}
+		else
+			this.LOOKUPS = (Map<String,Location>)ObjectSerializerIO.LoadObject( cm.getStringValue( LOOKUPS_KEY ) );
 	}
 	
 	public String getLatitude( String zip ) {
@@ -73,7 +64,7 @@ public final class ZipCodeApiWrapper implements Serializable {
 		try {
 			url = new URL( String.format("%s%s%s%s%s", URI, API, INFO, zip, UNITS ) );
 			JsonParser parser = new JsonParser();
-			JsonObject results = (JsonObject) parser.parse( IOUtils.GetUrlResult( url ) ); 
+			JsonObject results = (JsonObject) parser.parse( URLUtils.GetUrlResult( url ) ); 
 			loc.setCity( results.get("city").toString() );
 			loc.setLatitude(results.get("lat").toString());
 			loc.setLongitude( results.get( "lng" ).toString() );
@@ -93,7 +84,7 @@ public final class ZipCodeApiWrapper implements Serializable {
 	}
 	
 	public void serializeTheStuff() throws IOException {
-		IOUtils.WriteObject( ZCWFILE,  this );
+		ObjectSerializerIO.WriteObject( cm.getStringValue(LOOKUPS_KEY),  LOOKUPS );
 	}
 
 }

@@ -1,11 +1,12 @@
 package com.blackfez.applications.fircbot.processors;
 
 import com.blackfez.applications.fircbot.FircBot;
+import com.blackfez.applications.fircbot.utilities.ConfigurationManager;
 
 public class TimeMessageProcessor extends MessageProcessor {
 	
-	public TimeMessageProcessor( FircBot bot, String channel  ) {
-		super( bot, channel );
+	public TimeMessageProcessor( FircBot bot, String channel, ConfigurationManager configManager ) {
+		super( bot, channel, configManager );
 	}
 
 	@Override
